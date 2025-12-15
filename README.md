@@ -25,7 +25,7 @@ From the project root:
     $ uv run python -m scipyturbo.turbo_main
 
 
-## The DNS with SciPy (256 x 256)
+## The DNS with SciPy (384 x 384)
 
 ![SciPy](https://raw.githubusercontent.com/mannetroll/cupyxturbo/main/window.png)
 
