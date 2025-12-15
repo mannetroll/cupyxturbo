@@ -6,9 +6,8 @@ import time
 from typing import Optional
 
 from pathlib import Path
-from PySide6.QtGui import QIcon
 from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths
-from PySide6.QtGui import QImage, QPixmap, QFontDatabase, qRgb, QKeySequence, QShortcut
+from PySide6.QtGui import QIcon, QImage, QPixmap, QFontDatabase, qRgb, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
