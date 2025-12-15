@@ -39,7 +39,7 @@ import numpy as _np
 try:
     print(" Checking CuPy...")
     import cupy as _cp
-    _cp.cuda.Device()
+    _cp.show_config()
 except Exception:  # CuPy is optional
     _cp = None
     print(" CuPy not installed")
