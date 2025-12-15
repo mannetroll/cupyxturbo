@@ -248,7 +248,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cupy", marker = "extra == 'gpu'", specifier = ">=13.0" },
+    { name = "cupy", marker = "extra == 'gpu'", specifier = ">=13.1" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "pillow", specifier = ">=12.0.0" },
     { name = "pyqt6", specifier = ">=6.10.1" },
