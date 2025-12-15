@@ -39,7 +39,8 @@ import numpy as _np
 try:
     print(" Checking CuPy...")
     import cupy as _cp
-except ImportError:  # CuPy is optional
+    _cp.cuda.Device()
+except Exception:  # CuPy is optional
     _cp = None
     print(" CuPy not installed")
 
@@ -70,15 +71,6 @@ def _fft_mod_for_state(S: "DnsState"):
             return _cpfft
         return S.xp.fft
     return _spfft
-
-
-def check_cupy():
-    try:
-        print(" Checking CuPy...")
-        import cupy as _cp
-    except ImportError:  # CuPy is optional
-        _cp = None
-        print(" CuPy not installed")
 
 
 # ===============================================================
