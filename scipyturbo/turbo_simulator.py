@@ -357,7 +357,7 @@ def create_dns_state(
         seed_init=int(seed),
         fft_workers=4,
     )
-    print(f" workers: {state.fft_workers}")
+    print(f" workers (CPU): {state.fft_workers}")
 
     # Cache FFT module for the chosen backend (avoid per-call selection)
     state.fft = _fft_mod_for_state(state)

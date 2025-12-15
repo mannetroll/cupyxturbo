@@ -49,8 +49,7 @@ class DnsSimulator:
         self.max_steps = 5000
 
         # --- ONLY: max SciPy FFT workers on CPU ---
-        self.fft_workers = 6
-        print(f" workers = {self.fft_workers}")
+        self.fft_workers = 4
 
         # UR dimensions from Fortran workspace: UR(2+3N/2, 3N/2, 3)
         # For the pure-Python solver, we use the full 3/2-grid from DnsState.
