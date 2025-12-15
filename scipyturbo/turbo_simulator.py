@@ -72,7 +72,6 @@ def _fft_mod_for_state(S: "DnsState"):
         return S.xp.fft
     return _spfft
 
-
 # ===============================================================
 # Fortran-style random generator used in PAO (port of frand)
 # ===============================================================
