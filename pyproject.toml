@@ -13,8 +13,8 @@ authors = [
 dependencies = [
     "numpy>=2.3.5",
     "pillow>=12.0.0",
-    "PyQt6>=6.10.1",
     "scipy>=1.16.3",
+    "PySide6>=6.6",
 ]
 
 # Optional GPU extra
@@ -27,6 +27,9 @@ scipyturbo = "scipyturbo.turbo_main:main"
 # Package discovery
 [tool.setuptools.packages.find]
 include = ["scipyturbo"]
+
+[tool.setuptools.package-data]
+scipyturbo = ["*.icns"]
 
 [build-system]
 requires = ["setuptools", "wheel"]

@@ -5,9 +5,11 @@ import sys
 import time
 from typing import Optional
 
-from PyQt6.QtCore import QSize, QTimer, Qt, QStandardPaths
-from PyQt6.QtGui import QImage, QPixmap, QFontDatabase, qRgb, QKeySequence, QShortcut
-from PyQt6.QtWidgets import (
+from pathlib import Path
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths
+from PySide6.QtGui import QImage, QPixmap, QFontDatabase, qRgb, QKeySequence, QShortcut
+from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
     QWidget,
@@ -981,6 +983,11 @@ class MainWindow(QMainWindow):
 # ----------------------------------------------------------------------
 def main() -> None:
     app = QApplication(sys.argv)
+
+    icon_path = Path(__file__).with_name("scipyturbo.icns")
+    icon = QIcon(str(icon_path))
+    app.setWindowIcon(icon)
+
     sim = DnsSimulator(n=384)
     window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
