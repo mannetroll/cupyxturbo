@@ -273,7 +273,7 @@ COLOR_MAPS = {
     "RdBu": RDBU_LUT,
 }
 
-DEFAULT_CMAP_NAME = "Magma"
+DEFAULT_CMAP_NAME = "Inferno"
 
 # ----------------------------------------------------------------------
 # Option A: Qt Indexed8 + palette tables (avoid expanding to RGB in NumPy)
