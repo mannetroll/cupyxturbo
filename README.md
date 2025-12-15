@@ -52,7 +52,7 @@ Examples:
     $ python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 auto
 
 
-## Enabling GPU with CuPy (CUDA 13.1)
+## Enabling GPU with CuPy (CUDA 13)
 
 On a CUDA machine (e.g. RTX 3090):
 
