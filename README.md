@@ -45,7 +45,7 @@ Where:
 
 Examples:
 
-    # CPU run (SciPy, 4 workers)
+    # CPU run (SciPy with 4 workers)
     $ python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 cpu
 
     # Auto-select backend (GPU if CuPy + CUDA are available)
