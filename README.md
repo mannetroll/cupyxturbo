@@ -32,7 +32,7 @@ From the project root:
 
 ### Full CLI
 
-    $ python -m scipyturbo.scipy_simulator N Re K0 STEPS CFL BACKEND
+    $ python -m scipyturbo.turbo_simulator N Re K0 STEPS CFL BACKEND
 
 Where:
 
