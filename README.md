@@ -1,19 +1,19 @@
 # cupyxturbo — 2D Turbulence Simulation (SciPy / CuPy)
 
-`cupyturbo` is a small playground Direct Numerical Simulation (DNS) code for 
-**2D Homogeneous, Incompressible Turbulence**, structurally ported from a legacy FORTRAN 77 implementation.
+`scipyturbo` is a Direct Numerical Simulation (DNS) code for 
+**2D Homogeneous Turbulence**
 
 It supports:
 
 - **SciPy** for CPU runs
 - **CuPy** (optional) for GPU acceleration on CUDA devices (e.g. RTX 3090)
 
-The solver mirrors the original structure:
+The solver contains:
 
 - PAO-style random-field initialization
 - 3/2 de-aliasing in spectral space
 - Crank–Nicolson time integration
-
+- CFL-based adaptive time-stepping
 
 ## Installation
 
@@ -21,10 +21,9 @@ The solver mirrors the original structure:
 
 From the project root:
 
-    uv sync
-    uv run python -m scipyturbo.scipy_main
+    $ uv sync
+    $ uv run python -m scipyturbo.turbo_main
 
-This creates a virtual environment and installs the project and its dependencies from `pyproject.toml`.
 
 ## The DNS with SciPy (256 x 256)
 
@@ -33,7 +32,7 @@ This creates a virtual environment and installs the project and its dependencies
 
 ### Full CLI
 
-    python -m scipyturbo.scipy_simulator N Re K0 STEPS CFL BACKEND
+    $ python -m scipyturbo.scipy_simulator N Re K0 STEPS CFL BACKEND
 
 Where:
 
@@ -47,10 +46,10 @@ Where:
 Examples:
 
     # CPU run (SciPy, 4 workers)
-    python -m scipyturbo.scipy_simulator 256 10000 10 1001 0.75 cpu
+    $ python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 cpu
 
     # Auto-select backend (GPU if CuPy + CUDA are available)
-    python -m scipyturbo.scipy_simulator 256 10000 10 1001 0.75 auto
+    $ python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 auto
 
 
 ## Enabling GPU with CuPy (CUDA 13.1)
@@ -63,20 +62,20 @@ On a CUDA machine (e.g. RTX 3090):
 
 2. Install CuPy into the uv environment:
 
-       uv sync
-       uv pip install cupy
+       $ uv sync
+       $ uv pip install cupy
 
 3. Verify that CuPy sees the GPU:
 
-       uv run python -c "import cupy as cp; x = cp.arange(5); print(x, x.device)"
+       $ uv run python -c "import cupy as cp; x = cp.arange(5); print(x, x.device)"
 
 4. Run in GPU mode:
 
-       uv run python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 gpu
+       $ uv run python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 gpu
 
 Or let the backend auto-detect:
 
-       uv run python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 auto
+       $ uv run python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 auto
 
 
 ## The DNS with CuPy (4096 x 4096)
@@ -88,43 +87,43 @@ Or let the backend auto-detect:
 
 ### cProfile (CPU)
 
-    python -m cProfile -o turbo_simulator.prof -m scipyturbo.turbo_simulator    
+    $ python -m cProfile -o turbo_simulator.prof -m scipyturbo.turbo_simulator    
 
 Inspect the results:
 
-    python -m pstats turbo_simulator.prof
+    $ python -m pstats turbo_simulator.prof
     # inside pstats:
-    sort time
-    stats 20
+    turbo_simulator.prof% sort time
+    turbo_simulator.prof% stats 20
 
 
 ### GUI profiling with SnakeViz
 
 Install SnakeViz:
 
-    uv pip install snakeviz
+    $ uv pip install snakeviz
 
 Visualize the profile:
 
-    snakeviz turbo_simulator.prof
+    $ snakeviz turbo_simulator.prof
 
 
 ### Memory & CPU profiling with Scalene (GUI)
 
 Install Scalene:
 
-    uv pip install scalene
+    $ uv pip install scalene
 
 Run with GUI report:
 
-    scalene -m scipyturbo.turbo_simulator 256 10000 10 201 0.75 cpu
+    $ scalene -m scipyturbo.turbo_simulator 256 10000 10 201 0.75 cpu
 
 
 ### Memory & CPU profiling with Scalene (CLI only)
 
 For a terminal-only summary:
 
-    scalene --cli --cpu -m scipyturbo.turbo_simulator 256 10000 10 201 0.75 cpu
+    $ scalene --cli --cpu -m scipyturbo.turbo_simulator 256 10000 10 201 0.75 cpu
 
 
 ## Project layout (key modules)
@@ -145,9 +144,9 @@ For a terminal-only summary:
 ## one-liner
 
 ```
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv cache clean mannetroll-cupyxturbo
-uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.0 python -m scipyturbo.turbo_main
+$ curl -LsSf https://astral.sh/uv/install.sh | sh
+$ uv cache clean mannetroll-cupyxturbo
+$ uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.0 python -m scipyturbo.turbo_main
 ```
 
 ## License
