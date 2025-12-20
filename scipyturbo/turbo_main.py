@@ -391,7 +391,7 @@ class MainWindow(QMainWindow):
         # Reynolds selector (Re)
         self.re_combo = QComboBox()
         self.re_combo.setToolTip("R: Reynolds Number (Re)")
-        self.re_combo.addItems(["1", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15"])
+        self.re_combo.addItems(["1", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15", "1E18"])
         self.re_combo.setCurrentText(str(int(self.sim.re)))
 
         # K0 selector
@@ -411,7 +411,7 @@ class MainWindow(QMainWindow):
         # CFL selector
         self.cfl_combo = QComboBox()
         self.cfl_combo.setToolTip("L: Controlling Δt (CFL)")
-        self.cfl_combo.addItems(["0.05", "0.15", "0.25", "0.5", "0.75", "0.95"])
+        self.cfl_combo.addItems(["0.05", "0.1", "0.15", "0.25", "0.5", "0.75", "0.95"])
         self.cfl_combo.setCurrentText(str(self.sim.cfl))
 
         # Steps selector
