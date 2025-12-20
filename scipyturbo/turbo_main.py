@@ -385,7 +385,7 @@ class MainWindow(QMainWindow):
         # Grid-size selector (N)
         self.n_combo = QComboBox()
         self.n_combo.setToolTip("N: Grid Size (N)")
-        self.n_combo.addItems(["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096"])
+        self.n_combo.addItems(["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096", "6144"])
         self.n_combo.setCurrentText(str(self.sim.N))
 
         # Reynolds selector (Re)
@@ -397,7 +397,7 @@ class MainWindow(QMainWindow):
         # K0 selector
         self.k0_combo = QComboBox()
         self.k0_combo.setToolTip("K: Initial energy peak wavenumber (K0)")
-        self.k0_combo.addItems(["1", "5", "10", "15", "25", "35", "50"])
+        self.k0_combo.addItems(["1", "5", "10", "15", "20", "25", "35", "50"])
         self.k0_combo.setCurrentText(str(int(self.sim.k0)))
 
         # Colormap selector
@@ -564,8 +564,10 @@ class MainWindow(QMainWindow):
             scale = 2
         elif N <= 3072:
             scale = 4
-        else:
+        elif N <= 4096:
             scale = 6
+        else:
+            scale = 9
 
         if scale == 1:
             return np.ascontiguousarray(pix)
@@ -900,8 +902,10 @@ class MainWindow(QMainWindow):
             dpp = 50  # 2× downscale
         elif N <= 3072:
             dpp = 25  # 4× downscale
-        else:
+        elif N <= 4096:
             dpp = 17  # 6× downscale (≈16.7%)
+        else:
+            dpp = 11  # 6× downscale (≈11.1%)
 
         # elapsed wall time since sim start (minutes)
         elapsed_min = (time.time() - self._sim_start_time) / 60.0
