@@ -479,7 +479,8 @@ class MainWindow(QMainWindow):
                 pass
 
         self.setWindowTitle(f"2D Turbulence {title_backend} © Mannetroll")
-        self.resize(self.sim.px + 40, self.sim.py + 120)
+        disp_w, disp_h = self._display_size_px()
+        self.resize(disp_w + 40, disp_h + 120)
 
         # Keep-alive buffers for QImage wrappers
         self._last_pixels_rgb: Optional[np.ndarray] = None  # retained for compatibility
@@ -551,28 +552,63 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central)
 
-    def _maybe_downscale_u8(self, pix: np.ndarray) -> np.ndarray:
+    def _display_scale(self) -> float:
         """
-        Downscale a 2D uint8 image for display only.
-        Uses striding (nearest) to be very fast and avoid float work.
+        Must match _upscale_downscale_u8() scale logic.
         """
         N = self.sim.N
 
+        if N <= 128:
+            return 0.25
+        if N <= 256:
+            return 0.5
         if N < 768:
-            scale = 1
-        elif N <= 1024:
-            scale = 2
-        elif N <= 3072:
-            scale = 4
-        elif N <= 4096:
-            scale = 6
+            return 1.0
+        if N <= 1024:
+            return 2.0
+        if N <= 3072:
+            return 4.0
+        if N <= 4096:
+            return 6.0
         else:
-            scale = 9
+            return 9.0
 
-        if scale == 1:
+    def _display_size_px(self) -> tuple[int, int]:
+        """
+        Compute displayed image size (w,h) in pixels after _upscale_downscale_u8().
+        Uses sim.px/sim.py (the raw frame pixel dimensions) and the same scale rules.
+        """
+        scale = self._display_scale()
+
+        w0 = int(self.sim.px)
+        h0 = int(self.sim.py)
+
+        if scale == 1.0:
+            return (w0, h0)
+
+        if scale < 1.0:
+            up = int(round(1.0 / scale))
+            return (w0 * up, h0 * up)
+
+        s = int(scale)
+        return (max(1, w0 // s), max(1, h0 // s))
+
+    def _upscale_downscale_u8(self, pix: np.ndarray) -> np.ndarray:
+        """
+        Downscale (or upscale for small N) a 2D uint8 image for display only.
+        Uses striding (nearest) / repeats to be very fast and avoid float work.
+        """
+        scale = self._display_scale()
+
+        if scale == 1.0:
             return np.ascontiguousarray(pix)
 
-        return np.ascontiguousarray(pix[::scale, ::scale])
+        if scale < 1.0:
+            up = int(round(1.0 / scale))  # 0.5 -> 2, 0.25 -> 4
+            return np.ascontiguousarray(np.repeat(np.repeat(pix, up, axis=0), up, axis=1))
+
+        s = int(scale)  # 2,4,6,...
+        return np.ascontiguousarray(pix[::s, ::s])
 
     def _get_full_field(self, variable: str) -> np.ndarray:
         """
@@ -871,7 +907,7 @@ class MainWindow(QMainWindow):
         if pixels.ndim != 2:
             return
 
-        pixels = self._maybe_downscale_u8(pixels)
+        pixels = self._upscale_downscale_u8(pixels)
         h, w = pixels.shape
 
         # Keep numpy buffer alive for QImage
