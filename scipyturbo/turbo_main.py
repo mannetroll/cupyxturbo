@@ -391,7 +391,7 @@ class MainWindow(QMainWindow):
         # Reynolds selector (Re)
         self.re_combo = QComboBox()
         self.re_combo.setToolTip("R: Reynolds Number (Re)")
-        self.re_combo.addItems(["1", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15", "1E18"])
+        self.re_combo.addItems(["1", "10", "100", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15", "1E18"])
         self.re_combo.setCurrentText(str(int(self.sim.re)))
 
         # K0 selector
@@ -418,7 +418,7 @@ class MainWindow(QMainWindow):
         self.steps_combo = QComboBox()
         self.steps_combo.setToolTip("S: Max steps before reset/stop")
         self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "1E6"])
-        self.steps_combo.setCurrentText("5000")
+        self.steps_combo.setCurrentText("10000")
 
         # Update selector
         self.update_combo = QComboBox()
