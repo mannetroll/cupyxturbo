@@ -497,6 +497,9 @@ class MainWindow(QMainWindow):
         self._update_image(self.sim.get_frame_pixels())
         self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
 
+        # set combobox data
+        self.on_steps_changed(self.steps_combo.currentText())
+        self.on_update_changed(self.update_combo.currentText())
         self.on_start_clicked()  # auto-start simulation immediately
 
     # ------------------------------------------------------------------
