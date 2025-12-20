@@ -951,9 +951,10 @@ class MainWindow(QMainWindow):
 
         # Viscosity from DNS state
         visc = float(self.sim.state.visc)
+        dt = float(self.sim.state.dt)
 
         txt = (
-            f"FPS: {fps_str} | Iter: {it:5d} | T: {t:6.3f} "
+            f"FPS: {fps_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
             f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:14.12f}"
         )
 
