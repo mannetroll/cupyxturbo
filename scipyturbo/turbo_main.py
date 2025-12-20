@@ -954,7 +954,7 @@ class MainWindow(QMainWindow):
 
         txt = (
             f"FPS: {fps_str} | Iter: {it:5d} | T: {t:6.3f} "
-            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:12.10f}"
+            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:14.12f}"
         )
 
         self.status.showMessage(txt)
@@ -1031,6 +1031,7 @@ def main() -> None:
     app.setWindowIcon(icon)
 
     sim = DnsSimulator(n=384)
+    sim.step(1, run_next_dt=True)
     window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()
