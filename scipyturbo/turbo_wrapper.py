@@ -1,5 +1,6 @@
 # turbo_wrapper.py
 from pathlib import Path
+from time import perf_counter
 from typing import Union
 
 import numpy as np
@@ -48,6 +49,7 @@ class DnsSimulator:
 
         # --- ONLY: max SciPy FFT workers on CPU ---
         self.fft_workers = 4
+        start = perf_counter()
 
         # UR dimensions from Fortran workspace: UR(2+3N/2, 3N/2, 3)
         # For the pure-Python solver, we use the full 3/2-grid from DnsState.
@@ -95,6 +97,8 @@ class DnsSimulator:
             self.t = float(self.state.t)
             self.dt = float(self.state.dt)
             self.cn = float(self.state.cn)
+            elapsed = perf_counter() - start
+            print(f" DNS initialization took {elapsed:.3f} seconds")
 
     # ------------------------------------------------------------------
     def step(self, mod_next_dt: int, run_next_dt=False) -> None:
@@ -132,6 +136,7 @@ class DnsSimulator:
         self.iteration += 1
 
     def set_N(self, N: int) -> None:
+        start = perf_counter()
         """Recreate the entire DNS state with a new grid size N."""
         self.N = int(N)
         self.m = 3 * self.N  # preserve original structure
@@ -183,10 +188,13 @@ class DnsSimulator:
         self.dt = float(self.state.dt)
         self.cn = float(self.state.cn)
         self.iteration = 0
+        elapsed = perf_counter() - start
+        print(f" DNS initialization took {elapsed:.3f} seconds")
 
     # ------------------------------------------------------------------
     def reset_field(self) -> None:
         """Reinitialize the DNS state on the Fortran side."""
+        start = perf_counter()
         self.t = np.float32(0.0)
         self.dt = np.float32(0.0)
         self.cn = np.float32(1.0)
@@ -225,6 +233,9 @@ class DnsSimulator:
         self.t = float(self.state.t)
         self.dt = float(self.state.dt)
         self.cn = float(self.state.cn)
+
+        elapsed = perf_counter() - start
+        print(f" DNS initialization took {elapsed:.3f} seconds")
 
     # ------------------------------------------------------------------
     def diagnostics(self) -> dict:
