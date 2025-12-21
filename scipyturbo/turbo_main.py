@@ -934,17 +934,7 @@ class MainWindow(QMainWindow):
         fps_str = f"{fps:4.1f}" if fps is not None else " N/a"
 
         # DPP = Display Pixel Percentage
-        N = self.sim.N
-        if N < 768:
-            dpp = 100  # 1× scale
-        elif N <= 1024:
-            dpp = 50  # 2× downscale
-        elif N <= 3072:
-            dpp = 25  # 4× downscale
-        elif N <= 4096:
-            dpp = 17  # 6× downscale (≈16.7%)
-        else:
-            dpp = 11  # 6× downscale (≈11.1%)
+        dpp = 100//self._display_scale()
 
         # elapsed wall time since sim start (minutes)
         elapsed_min = (time.time() - self._sim_start_time) / 60.0
