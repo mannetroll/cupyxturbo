@@ -397,7 +397,7 @@ class MainWindow(QMainWindow):
         # K0 selector
         self.k0_combo = QComboBox()
         self.k0_combo.setToolTip("K: Initial energy peak wavenumber (K0)")
-        self.k0_combo.addItems(["1", "5", "10", "15", "20", "25", "35", "50"])
+        self.k0_combo.addItems(["1", "5", "10", "15", "20", "25", "35", "50", "100"])
         self.k0_combo.setCurrentText(str(int(self.sim.k0)))
 
         # Colormap selector
@@ -417,7 +417,7 @@ class MainWindow(QMainWindow):
         # Steps selector
         self.steps_combo = QComboBox()
         self.steps_combo.setToolTip("S: Max steps before reset/stop")
-        self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "1E6"])
+        self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "1E6", "1E7"])
         self.steps_combo.setCurrentText("10000")
 
         # Update selector
