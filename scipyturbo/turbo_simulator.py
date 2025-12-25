@@ -664,7 +664,7 @@ def dns_pao_host_init(S: DnsState):
             for c in range(2):
                 UC_full_host[x, z, c] = UR[x, z, c]
 
-    print(f" PAO initialization OK. VISC={float(S.visc):16.14f}")
+    print(f" PAO initialization OK. VISC={float(S.visc):20.18f}")
 
     # ------------------------------------------------------------------
     # Move alfa/gamma/UC/UC_full into DnsState (xp backend, SoA layout)
