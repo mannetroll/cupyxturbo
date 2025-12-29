@@ -506,7 +506,11 @@ def dns_pao_host_init(S: DnsState):
     # ------------------------------------------------------------------
     # Generate isotropic random spectrum (Fortran DO 500/510 loops)
     # ------------------------------------------------------------------
+    print("Generate isotropic random spectrum...")
     for z in range(NE):
+        if z % 1000 == 0:
+            print(f"z={z}/{NE}")
+
         gz = gamma[z]
         for x in range(NED2):
             r = frand(seed)
@@ -557,6 +561,7 @@ def dns_pao_host_init(S: DnsState):
     A1 = A2 = A3 = A4 = A5 = A6 = A7 = 0.0
     E110 = 0.0
 
+    print("Compute averages A(1..7), E110, Q2, W2, VISC...")
     for x in range(ND2):
         x1 = (x == 0)
         ax2 = float(alfa[x]) * float(alfa[x])
