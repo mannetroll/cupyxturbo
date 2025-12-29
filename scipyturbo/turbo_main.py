@@ -1,4 +1,5 @@
 # turbo_main.py
+import math
 import colorsys
 import os
 import sys
@@ -562,43 +563,47 @@ class MainWindow(QMainWindow):
     def _display_scale(self) -> float:
         """
         Must match _upscale_downscale_u8() scale logic.
-        """
-        N = self.sim.N
 
-        if N <= 128:
-            return 0.25
-        if N <= 256:
-            return 0.5
-        if N < 768:
-            return 1.0
-        if N <= 1024:
-            return 2.0
-        if N <= 3072:
-            return 4.0
-        if N <= 4096:
-            return 6.0
-        else:
-            return 9.0
+        Convention (based on your existing mapping code):
+          - scale < 1.0  => upscale by (1/scale) (integer)
+          - scale > 1.0  => downscale by scale   (integer)
+
+        Goal: displayed_size ~= N / down <= max_h   (for big N)
+              displayed_size ~= N * up  <= max_h   (for small N)
+        """
+        N = int(self.sim.N)
+
+        # MacBook Pro window height you mentioned:
+        screen_h = 1024
+
+        # Leave room for top buttons, status bar, margins, etc.
+        # Tune this once if you want it a bit larger/smaller on screen.
+        ui_margin = 320
+        max_h = max(128, screen_h - ui_margin)
+
+        if N >= max_h:
+            down = int(math.ceil(N / max_h))  # integer downscale so N/down <= max_h
+            return float(down)
+
+        up = int(math.floor(max_h / N))  # integer upscale so N*up <= max_h
+        if up < 1:
+            up = 1
+        return 1.0 / float(up)
 
     def _display_size_px(self) -> tuple[int, int]:
-        """
-        Compute displayed image size (w,h) in pixels after _upscale_downscale_u8().
-        Uses sim.px/sim.py (the raw frame pixel dimensions) and the same scale rules.
-        """
         scale = self._display_scale()
-
         w0 = int(self.sim.px)
         h0 = int(self.sim.py)
 
         if scale == 1.0:
-            return (w0, h0)
+            return w0, h0
 
         if scale < 1.0:
             up = int(round(1.0 / scale))
-            return (w0 * up, h0 * up)
+            return w0 * up, h0 * up
 
         s = int(scale)
-        return (max(1, w0 // s), max(1, h0 // s))
+        return max(1, w0 // s), max(1, h0 // s)
 
     def _upscale_downscale_u8(self, pix: np.ndarray) -> np.ndarray:
         """
