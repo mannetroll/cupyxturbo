@@ -112,7 +112,7 @@ Visualize the profile:
 
 Install Scalene:
 
-    $ uv pip install scalene
+    $ uv pip install "scalene==1.5.55"
 
 Run with GUI report:
 
