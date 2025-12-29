@@ -125,22 +125,6 @@ For a terminal-only summary:
 
     $ scalene --cli --cpu -m scipyturbo.turbo_simulator 256 10000 10 201 0.75 cpu
 
-
-## Project layout (key modules)
-
-- `scipyturbo/turbo_main.py`  
-  PyQt6 GUI viewer; displays DNS fields (U, V, ω, kinetic) in real time.
-
-- `scipyturbo/turbo_simulator.py`  
-  Headless CLI DNS solver:
-  - PAO initialization (dns_pao_host_init)
-  - FFT helpers (vfft_full_*)
-  - STEP2A, STEP2B, STEP3
-  - CFL-based time-step control (compute_cflm, next_dt)
-
-- `scipyturbo/turbo_wrapper.py`  
-  Thin wrapper for programmatic use.
-
 ## one-liner CPU/SciPy
 
 ```
