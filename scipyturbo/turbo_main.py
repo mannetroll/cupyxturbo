@@ -385,13 +385,17 @@ class MainWindow(QMainWindow):
         # Grid-size selector (N)
         self.n_combo = QComboBox()
         self.n_combo.setToolTip("N: Grid Size (N)")
-        self.n_combo.addItems(["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096", "6144"])
+        self.n_combo.addItems(
+            ["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096", "6144", "7776",
+             "8192", "9216", "16384", "18432", "20480", "24576", "32768"]
+        )
         self.n_combo.setCurrentText(str(self.sim.N))
 
         # Reynolds selector (Re)
         self.re_combo = QComboBox()
         self.re_combo.setToolTip("R: Reynolds Number (Re)")
-        self.re_combo.addItems(["1", "10", "100", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15", "1E18"])
+        self.re_combo.addItems(["10", "100", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15",
+                                "1E18", "1E21", "1E23", "1E25"])
         self.re_combo.setCurrentText(str(int(self.sim.re)))
 
         # K0 selector
