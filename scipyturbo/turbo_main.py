@@ -499,7 +499,7 @@ class MainWindow(QMainWindow):
         self.variable_combo.setCurrentIndex(3)
 
         self._update_image(self.sim.get_frame_pixels())
-        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
+        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None, None)
 
         # set combobox data
         self.on_steps_changed(self.steps_combo.currentText())
@@ -683,13 +683,13 @@ class MainWindow(QMainWindow):
         self._update_image(pixels)
         t = self.sim.get_time()
         it = self.sim.get_iteration()
-        self._update_status(t, it, fps=None)
+        self._update_status(t, it, None, None)
 
     def on_reset_clicked(self) -> None:
         self.on_stop_clicked()
         self.sim.reset_field()
         self._update_image(self.sim.get_frame_pixels())
-        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
+        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None, None)
         self.on_start_clicked()
 
     @staticmethod
@@ -859,14 +859,17 @@ class MainWindow(QMainWindow):
             now = time.time()
             elapsed = now - self._sim_start_time
             steps = self.sim.get_iteration() - self._sim_start_iter
+
             fps = None
+            mspf = None
             if elapsed > 0 and steps > 0:
                 fps = steps / elapsed
+                mspf = 1000.0 * (elapsed / steps)
 
             self._update_status(
                 self.sim.get_time(),
                 self.sim.get_iteration(),
-                fps,
+                fps, mspf
             )
 
             self._status_update_counter = 0
@@ -934,24 +937,21 @@ class MainWindow(QMainWindow):
         pix = QPixmap.fromImage(qimg, Qt.ImageConversionFlag.NoFormatConversion)
         self.image_label.setPixmap(pix)
 
-    def _update_status(self, t: float, it: int, fps: Optional[float]) -> None:
-        fps_str = f"{fps:4.1f}" if fps is not None else " N/a"
+    def _update_status(self, t: float, it: int, fps: Optional[float], mspf: Optional[float]) -> None:
+        fps_str = f"{fps:5.2f}" if fps is not None else " N/A"
+        mspf_str = f"{mspf:6.1f}" if mspf is not None else " N/A"
 
         # DPP = Display Pixel Percentage
-        dpp = 100//self._display_scale()
+        dpp = int(100 / self._display_scale())
 
-        # elapsed wall time since sim start (minutes)
         elapsed_min = (time.time() - self._sim_start_time) / 60.0
-
-        # Viscosity from DNS state
         visc = float(self.sim.state.visc)
         dt = float(self.sim.state.dt)
 
         txt = (
-            f"FPS: {fps_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
-            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:14.12f}"
+            f"FPS: {fps_str} | MSPF: {mspf_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
+            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:6g}"
         )
-
         self.status.showMessage(txt)
 
     # ------------------------------------------------------------------
