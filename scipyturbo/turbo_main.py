@@ -4,6 +4,7 @@ import colorsys
 import os
 import sys
 import time
+import datetime as _dt
 from typing import Optional
 
 from pathlib import Path
@@ -955,7 +956,7 @@ class MainWindow(QMainWindow):
 
         txt = (
             f"FPS: {fps_str} | MSPF: {mspf_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
-            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:6g}"
+            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:6g} | {_dt.datetime.now().strftime("%Y-%m-%d %H:%M")}"
         )
         self.status.showMessage(txt)
 
