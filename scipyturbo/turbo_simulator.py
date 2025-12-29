@@ -1498,9 +1498,9 @@ def run_dns(
         elap = t1 - t0
         fps = (STEPS / elap) if elap > 0 else 0.0
 
-        print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:5g}")
-        print(f" Final T={S.t:8g}  CN={S.cn:8g}  DT={S.dt:8g}  VISC={S.visc:8g}")
-        print(f" FPS = {fps:5g}")
+        print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:g}")
+        print(f" Final T={S.t:g}  CN={S.cn:g}  DT={S.dt:g}  VISC={S.visc:g}")
+        print(f" FPS = {fps:g}")
 
 def main():
     #
