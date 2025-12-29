@@ -1031,7 +1031,7 @@ def main() -> None:
     icon = QIcon(str(icon_path))
     app.setWindowIcon(icon)
 
-    sim = DnsSimulator(n=384)
+    sim = DnsSimulator(n=256)
     sim.step(1, run_next_dt=True)
     window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
