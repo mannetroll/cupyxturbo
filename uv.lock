@@ -111,14 +111,18 @@ wheels = [
 ]
 
 [[package]]
-name = "cupy"
+name = "cupy-cuda13x"
 version = "13.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastrlock" },
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a7/95/c2c7b5dca22dd7409308d076c33c681f810efd77e2b62e5107027cc98597/cupy-13.6.0.tar.gz", hash = "sha256:3cba30ae3dd32b5d5c6536e710cb98015227cd4ba83c46b3f1825a7ae55b6667", size = 3319720, upload-time = "2025-08-18T08:33:04.503Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/2d/91af3d769c7d0cdd6eb7fa1e32e5971171ee3a7679704f8f3a13d000d5db/cupy_cuda13x-13.6.0-cp313-cp313-manylinux2014_aarch64.whl", hash = "sha256:d6d83733691d3114f1a5b792c9e1288e2fb4c432023ce86853a37a16193e1760", size = 65900404, upload-time = "2025-08-18T08:32:43.043Z" },
+    { url = "https://files.pythonhosted.org/packages/1a/5c/885d0113113f4a0bfe3e30cd74f92eb4f8717e3077224655496ad98a12de/cupy_cuda13x-13.6.0-cp313-cp313-manylinux2014_x86_64.whl", hash = "sha256:015a052ec46bad154a74ff04c9c5aea2a8ab441f2d6ae3824bdfe3db0eeb4d2e", size = 54331219, upload-time = "2025-08-18T08:32:46.81Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/63/4935ead68bc414e4d7d8ba16b1feae5bd0b59ebc02c061e70bd100623d61/cupy_cuda13x-13.6.0-cp313-cp313-win_amd64.whl", hash = "sha256:ccde134a3fdfffbf6ba6fb933173a11efce4108730aeb86a672dc09507acdb98", size = 33874661, upload-time = "2025-08-18T08:32:50.429Z" },
+]
 
 [[package]]
 name = "docutils"
@@ -235,8 +239,8 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-gpu = [
-    { name = "cupy" },
+cuda = [
+    { name = "cupy-cuda13x" },
 ]
 
 [package.dev-dependencies]
@@ -247,13 +251,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cupy", marker = "extra == 'gpu'", specifier = ">=13.1" },
+    { name = "cupy-cuda13x", marker = "extra == 'cuda'", specifier = ">=13.6.0" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "pillow", specifier = ">=12.0.0" },
     { name = "pyside6", specifier = ">=6.6" },
     { name = "scipy", specifier = ">=1.16.3" },
 ]
-provides-extras = ["gpu"]
+provides-extras = ["cuda"]
 
 [package.metadata.requires-dev]
 dev = [

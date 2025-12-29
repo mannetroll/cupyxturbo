@@ -29,6 +29,7 @@ formulas follow the CUDA kernels line-by-line.
 """
 from contextlib import nullcontext
 import time
+import datetime as _dt
 import math
 import sys
 from dataclasses import dataclass
@@ -447,6 +448,9 @@ def dns_pao_host_init(S: DnsState):
     K0 = np.float32(S.K0)
     NORM = PI * K0 * K0
 
+    print("--- INITIALIZING PAO (SciPy/CuPy) ---", _dt.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    print(f" N={N}, K0={int(K0)}, Re={S.Re}")
+
     # ------------------------------------------------------------------
     # Build ALFA(N/2) and GAMMA(N)  (Fortran DALFA, DGAMMA, E1, E3)
     # ------------------------------------------------------------------
@@ -607,14 +611,14 @@ def dns_pao_host_init(S: DnsState):
 
     # Print diagnostics exactly like the CUDA/Fortran version
     print(f" N           ={N:12.0f}")
-    print(f" Reynolds n. ={float(S.Re):12.1f}")
+    print(f" Reynolds n. ={float(S.Re):12.1g}")
     print(f" K0          ={K0:12.0f}")
     print(f" Energy      ={Q2:12.4f}")
     print(f" WiWi        ={W2:12.4f}")
     print(f" Epsilon     ={EP:12.4f}")
     print(f" a11         ={a11:12.4f}")
     print(f" e11         ={e11:12.4f}")
-    print(f" Time scale  ={tscale:12.4f}")
+    print(f" Time scale  ={tscale:12.4g}")
     print(f" Kolmogorov  ={KOL:12.4f}")
     print(f" Viscosity   ={visc:12.4f}")
     print(f" dx/Kol.     ={dxKol:12.4f}")
@@ -664,7 +668,7 @@ def dns_pao_host_init(S: DnsState):
             for c in range(2):
                 UC_full_host[x, z, c] = UR[x, z, c]
 
-    print(f" PAO initialization OK. VISC={float(S.visc):20.18f}")
+    print(f" PAO initialization OK. VISC={float(S.visc):.7g}")
 
     # ------------------------------------------------------------------
     # Move alfa/gamma/UC/UC_full into DnsState (xp backend, SoA layout)
