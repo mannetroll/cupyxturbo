@@ -58,12 +58,12 @@ On a CUDA machine (e.g. RTX 3090):
 
 1. Check that the driver/CUDA are available:
 
-       $ nvidia-smi | head -n 3
+       $ nvidia-smi
 
 2. Install CuPy into the uv environment:
 
-       $ uv sync
-       $ uv pip install cupy
+       $ uv sync --extra cuda
+       $ uv run -- scipyturbo
 
 3. Verify that CuPy sees the GPU:
 
@@ -141,12 +141,18 @@ For a terminal-only summary:
 - `scipyturbo/turbo_wrapper.py`  
   Thin wrapper for programmatic use.
 
-## one-liner
+## one-liner CPU/SciPy
 
 ```
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
 $ uv cache clean mannetroll-cupyxturbo
-$ uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.0 python -m scipyturbo.turbo_main
+$ uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.1 -- scipyturbo
+```
+
+## one-liner GPU/CuPy
+
+```
+$ uv run --python 3.13 --with "mannetroll-cupyxturbo[cuda]==0.1.1" -- scipyturbo
 ```
 
 ## License

@@ -751,7 +751,7 @@ class MainWindow(QMainWindow):
         # determine variable name for filename
         var_name = self.variable_combo.currentText()
         cmap_name = self.cmap_combo.currentText()
-        default_name = f"cupyturbo_{var_name}_{cmap_name}.png"
+        default_name = f"cupyxturbo_{var_name}_{cmap_name}.png"
 
         # Default root = Desktop
         desktop = QStandardPaths.writableLocation(
