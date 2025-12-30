@@ -532,7 +532,7 @@ class MainWindow(QMainWindow):
 
         # First row
         row1 = QHBoxLayout()
-        row1.setContentsMargins(20, 0, 0, 0)
+        row1.setContentsMargins(10, 0, 0, 0)
         row1.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row1.addWidget(self.start_button)
         row1.addWidget(self.stop_button)
@@ -542,14 +542,12 @@ class MainWindow(QMainWindow):
         row1.addWidget(self.n_combo)
         row1.addWidget(self.variable_combo)
         row1.addWidget(self.cmap_combo)
-        row1.setContentsMargins(20, 0, 0, 0)
-        row1.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row1.addWidget(self.re_combo)
         row1.addWidget(self.k0_combo)
         row1.addWidget(self.cfl_combo)
         row1.addWidget(self.steps_combo)
         row1.addWidget(self.auto_reset_checkbox)
-        row1.addSpacing(8)
+        row1.addSpacing(3)
         row1.addWidget(self.update_combo)
         main.addLayout(row1)
 
