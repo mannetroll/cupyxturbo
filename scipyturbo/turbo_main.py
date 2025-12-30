@@ -545,7 +545,7 @@ class MainWindow(QMainWindow):
 
         # Second row
         row2 = QHBoxLayout()
-        row2.setContentsMargins(17, 0, 0, 0)
+        row2.setContentsMargins(20, 0, 0, 0)
         row2.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row2.addWidget(self.re_combo)
         row2.addWidget(self.k0_combo)
