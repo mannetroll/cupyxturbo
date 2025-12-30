@@ -62,7 +62,7 @@ To keep the GUI responsive for large grids, the displayed image is automatically
 From the project root:
 
     $ uv sync
-    $ uv run python -m scipyturbo.turbo_main
+    $ uv run -- turbulence
 
 
 ## The DNS with SciPy (384 x 384)
@@ -103,7 +103,7 @@ On a CUDA machine (e.g. RTX 3090):
 2. Install CuPy into the uv environment:
 
        $ uv sync --extra cuda
-       $ uv run -- scipyturbo
+       $ uv run -- turbulence
 
 3. Verify that CuPy sees the GPU:
 
