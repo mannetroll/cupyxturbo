@@ -539,6 +539,7 @@ class MainWindow(QMainWindow):
         row1.addWidget(self.reset_button)
         row1.addWidget(self.save_button)
         row1.addWidget(self.folder_button)
+        row1.addSpacing(10)
         row1.addWidget(self.n_combo)
         row1.addWidget(self.variable_combo)
         row1.addWidget(self.cmap_combo)
