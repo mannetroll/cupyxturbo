@@ -546,7 +546,7 @@ class MainWindow(QMainWindow):
 
         # First row
         row1 = QHBoxLayout()
-        row1.setContentsMargins(10, 0, 0, 0)
+        row1.setContentsMargins(20, 0, 0, 0)
         row1.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row1.addWidget(self.start_button)
         row1.addWidget(self.stop_button)
