@@ -279,6 +279,11 @@ COLOR_MAPS = {
 }
 
 DEFAULT_CMAP_NAME = "Inferno"
+# ----------------------------------------------------------------------
+# Display normalization, reduces flicker when the underlying dynamic range
+# changes quickly.
+# ----------------------------------------------------------------------
+DISPLAY_NORM_K_STD = 2.5          # map [mu - k*sigma, mu + k*sigma] -> [0,255]
 
 # ----------------------------------------------------------------------
 # Option A: Qt Indexed8 + palette tables (avoid expanding to RGB in NumPy)
@@ -922,25 +927,32 @@ class MainWindow(QMainWindow):
             f.write(pix.tobytes())
 
     def _update_image(self, pixels: np.ndarray) -> None:
-        """
-        Display H×W uint8 pixels using Qt Indexed8 + color table.
-        Avoids expanding to H×W×3 RGB in NumPy.
-        """
         pixels = np.asarray(pixels, dtype=np.uint8)
         if pixels.ndim != 2:
             return
 
+        # Reduce display flicker by using a stable (EMA) mean/std
+        # normalization instead of frame-wise min/max stretching.
+        pix_f = pixels.astype(np.float32, copy=False)
+        mu = float(pix_f.mean())
+        sig = float(pix_f.std())
+        if sig < 1.0e-6:
+            sig = 1.0
+
+        k = float(DISPLAY_NORM_K_STD)
+        lo = mu - k * sig
+        hi = mu + k * sig
+        inv = 255.0 / (hi - lo) if (hi - lo) != 0.0 else 0.0
+        pixels = ((pix_f - lo) * inv).round().clip(0.0, 255.0).astype(np.uint8)
+
         pixels = self._upscale_downscale_u8(pixels)
         h, w = pixels.shape
-
-        # Keep numpy buffer alive for QImage
-        self._last_pixels_u8 = pixels
 
         qimg = QImage(
             pixels.data,
             w,
             h,
-            w,  # bytesPerLine: 1 byte per pixel
+            w,
             QImage.Format.Format_Indexed8,
         )
 
