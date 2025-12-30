@@ -30,6 +30,8 @@ import numpy as np
 from scipyturbo import turbo_simulator as dns_all
 from scipyturbo.turbo_wrapper import DnsSimulator
 
+FUSION = "Fusion"
+
 
 # Simple helper: build a 256x3 uint8 LUT from color stops in 0..1
 # stops: list of (pos, (r,g,b)) with pos in [0,1], r,g,b in [0,255]
@@ -338,7 +340,7 @@ class MainWindow(QMainWindow):
         self.image_label.setMinimumSize(1, 1)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # --- small icon buttons ---
+
         style = QApplication.style()
 
         # Start button
@@ -435,6 +437,18 @@ class MainWindow(QMainWindow):
         self.auto_reset_checkbox = QCheckBox()
         self.auto_reset_checkbox.setToolTip("If checked, simulation auto-resets")
         self.auto_reset_checkbox.setChecked(True)
+
+        if sys.platform == "darwin":
+            from PySide6.QtWidgets import QStyleFactory
+            self.variable_combo.setStyle(QStyleFactory.create(FUSION))
+            self.cmap_combo.setStyle(QStyleFactory.create(FUSION))
+            self.n_combo.setStyle(QStyleFactory.create(FUSION))
+            self.re_combo.setStyle(QStyleFactory.create(FUSION))
+            self.k0_combo.setStyle(QStyleFactory.create(FUSION))
+            self.cfl_combo.setStyle(QStyleFactory.create(FUSION))
+            self.steps_combo.setStyle(QStyleFactory.create(FUSION))
+            self.update_combo.setStyle(QStyleFactory.create(FUSION))
+
 
         self._build_layout()
 
@@ -548,7 +562,7 @@ class MainWindow(QMainWindow):
         row1.addWidget(self.cfl_combo)
         row1.addWidget(self.steps_combo)
         row1.addWidget(self.auto_reset_checkbox)
-        row1.addSpacing(3)
+        row1.addSpacing(10)
         row1.addWidget(self.update_combo)
         main.addLayout(row1)
 
