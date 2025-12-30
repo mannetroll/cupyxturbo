@@ -24,7 +24,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QStyle,
     QLineEdit,
-    QSizePolicy,
 )
 import numpy as np
 
