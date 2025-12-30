@@ -63,7 +63,7 @@ From the project root:
 
     $ uv sync
     $ uv run -- turbulence
-
+    $ uv run -- fps
 
 ## The DNS with SciPy (384 x 384)
 
@@ -104,6 +104,7 @@ On a CUDA machine (e.g. RTX 3090):
 
        $ uv sync --extra cuda
        $ uv run -- turbulence
+       $ uv run -- fps
 
 3. Verify that CuPy sees the GPU:
 
@@ -170,13 +171,13 @@ For a terminal-only summary:
 ```
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
 $ uv cache clean mannetroll-cupyxturbo
-$ uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.1 -- turbulence
+$ uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.2 -- turbulence
 ```
 
 ## one-liner GPU/CuPy
 
 ```
-$ uv run --python 3.13 --with "mannetroll-cupyxturbo[cuda]==0.1.1" -- turbulence
+$ uv run --python 3.13 --with "mannetroll-cupyxturbo[cuda]==0.1.2" -- turbulence
 ```
 
 ## License
