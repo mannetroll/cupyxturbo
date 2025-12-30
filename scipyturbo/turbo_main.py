@@ -396,7 +396,7 @@ class MainWindow(QMainWindow):
         # Reynolds selector (Re)
         self.re_combo = QComboBox()
         self.re_combo.setToolTip("R: Reynolds Number (Re)")
-        self.re_combo.addItems(["10", "100", "1000", "10000", "1E5", "1E6", "1E9", "1E12", "1E15",
+        self.re_combo.addItems(["10", "100", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15",
                                 "1E18", "1E21", "1E23", "1E25"])
         self.re_combo.setCurrentText(str(int(self.sim.re)))
 
