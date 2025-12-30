@@ -532,7 +532,7 @@ class MainWindow(QMainWindow):
 
         # First row
         row1 = QHBoxLayout()
-        row1.setContentsMargins(10, 0, 0, 0)
+        row1.setContentsMargins(20, 0, 0, 0)
         row1.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row1.addWidget(self.start_button)
         row1.addWidget(self.stop_button)
@@ -545,7 +545,7 @@ class MainWindow(QMainWindow):
 
         # Second row
         row2 = QHBoxLayout()
-        row2.setContentsMargins(7, 0, 0, 0)
+        row2.setContentsMargins(17, 0, 0, 0)
         row2.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row2.addWidget(self.re_combo)
         row2.addWidget(self.k0_combo)
@@ -558,7 +558,7 @@ class MainWindow(QMainWindow):
         # Combine into the single row if large N
         if self.sim.N >= 1024:
             single = QHBoxLayout()
-            row1.setContentsMargins(10, 0, 0, 0)
+            row1.setContentsMargins(20, 0, 0, 0)
             single.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
             self.move_widgets(row1, single)
             self.move_widgets(row2, single)
