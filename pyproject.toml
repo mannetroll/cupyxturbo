@@ -22,7 +22,7 @@ dependencies = [
 cuda = ["cupy-cuda13x>=13.6.0"]
 
 [project.scripts]
-scipyturbo = "scipyturbo.turbo_main:main"
+turbulence = "scipyturbo.turbo_main:main"
 
 # Package discovery
 [tool.setuptools.packages.find]
