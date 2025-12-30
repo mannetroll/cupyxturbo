@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QStyle,
     QLineEdit,
+    QSizePolicy,
 )
 import numpy as np
 
@@ -383,6 +384,7 @@ class MainWindow(QMainWindow):
         self.variable_combo = QComboBox()
         self.variable_combo.setToolTip("V: Variable")
         self.variable_combo.addItems(["U", "V", "K", "Ω", "φ"])
+        self.variable_combo.setFixedWidth(60)
 
         # Grid-size selector (N)
         self.n_combo = QComboBox()
@@ -392,6 +394,7 @@ class MainWindow(QMainWindow):
              "8192", "9216", "16384", "18432", "20480", "24576", "32768"]
         )
         self.n_combo.setCurrentText(str(self.sim.N))
+        self.n_combo.setFixedWidth(90)
 
         # Reynolds selector (Re)
         self.re_combo = QComboBox()
@@ -399,17 +402,20 @@ class MainWindow(QMainWindow):
         self.re_combo.addItems(["10", "100", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15",
                                 "1E18", "1E21", "1E23", "1E25"])
         self.re_combo.setCurrentText(str(int(self.sim.re)))
+        self.re_combo.setFixedWidth(95)
 
         # K0 selector
         self.k0_combo = QComboBox()
         self.k0_combo.setToolTip("K: Initial energy peak wavenumber (K0)")
         self.k0_combo.addItems(["5", "10", "15", "20", "25", "35", "50", "100"])
         self.k0_combo.setCurrentText(str(int(self.sim.k0)))
+        self.k0_combo.setFixedWidth(70)
 
         # Colormap selector
         self.cmap_combo = QComboBox()
         self.cmap_combo.setToolTip("C: Colormaps")
         self.cmap_combo.addItems(list(COLOR_MAPS.keys()))
+        self.cmap_combo.setFixedWidth(105)
         idx = self.cmap_combo.findText(DEFAULT_CMAP_NAME)
         if idx >= 0:
             self.cmap_combo.setCurrentIndex(idx)
@@ -419,18 +425,21 @@ class MainWindow(QMainWindow):
         self.cfl_combo.setToolTip("L: Controlling Δt (CFL)")
         self.cfl_combo.addItems(["0.05", "0.1", "0.15", "0.25", "0.5", "0.75", "0.95"])
         self.cfl_combo.setCurrentText(str(self.sim.cfl))
+        self.cfl_combo.setFixedWidth(70)
 
         # Steps selector
         self.steps_combo = QComboBox()
         self.steps_combo.setToolTip("S: Max steps before reset/stop")
         self.steps_combo.addItems(["1000", "2000", "5000", "10000", "25000", "50000", "1E5", "2E5", "3E5", "1E6", "1E7"])
         self.steps_combo.setCurrentText("10000")
+        self.steps_combo.setFixedWidth(90)
 
         # Update selector
         self.update_combo = QComboBox()
         self.update_combo.setToolTip("U: Update intervall")
         self.update_combo.addItems(["2", "5", "10", "20", "50", "100", "1000"])
         self.update_combo.setCurrentText("5")
+        self.update_combo.setFixedWidth(80)
 
         self.auto_reset_checkbox = QCheckBox()
         self.auto_reset_checkbox.setToolTip("If checked, simulation auto-resets")
@@ -527,31 +536,39 @@ class MainWindow(QMainWindow):
 
         central = QWidget()
         main = QVBoxLayout(central)
+        main.setSpacing(6)
         main.addWidget(self.image_label)
 
         # First row
         row1 = QHBoxLayout()
+        row1.setContentsMargins(10, 0, 0, 0)
+        row1.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row1.addWidget(self.start_button)
         row1.addWidget(self.stop_button)
         row1.addWidget(self.reset_button)
         row1.addWidget(self.save_button)
         row1.addWidget(self.folder_button)
+        row1.addWidget(self.n_combo)
+        row1.addWidget(self.variable_combo)
         row1.addWidget(self.cmap_combo)
-        row1.addWidget(self.steps_combo)
-        row1.addWidget(self.update_combo)
-        row1.addWidget(self.auto_reset_checkbox)
 
         # Second row
         row2 = QHBoxLayout()
-        row2.addWidget(self.variable_combo)
-        row2.addWidget(self.n_combo)
+        row2.setContentsMargins(7, 0, 0, 0)
+        row2.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row2.addWidget(self.re_combo)
         row2.addWidget(self.k0_combo)
         row2.addWidget(self.cfl_combo)
+        row2.addWidget(self.steps_combo)
+        row2.addWidget(self.auto_reset_checkbox)
+        row2.addSpacing(8)
+        row2.addWidget(self.update_combo)
 
         # Combine into the single row if large N
         if self.sim.N >= 1024:
             single = QHBoxLayout()
+            row1.setContentsMargins(10, 0, 0, 0)
+            single.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
             self.move_widgets(row1, single)
             self.move_widgets(row2, single)
             main.addLayout(single)
