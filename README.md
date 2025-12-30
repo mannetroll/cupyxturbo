@@ -1,19 +1,59 @@
-# cupyxturbo — 2D Turbulence Simulation (SciPy / CuPy)
+# 2D Turbulence Simulation (SciPy / CuPy)
 
-`scipyturbo` is a Direct Numerical Simulation (DNS) code for 
-**2D Homogeneous Turbulence**
+A Direct Numerical Simulation (DNS) code for **2D homogeneous incompressible turbulence**
 
 It supports:
 
-- **SciPy** for CPU runs
+- **SciPy / NumPy** for CPU runs
 - **CuPy** (optional) for GPU acceleration on CUDA devices (e.g. RTX 3090)
 
-The solver contains:
+### DNS solver
+The solver includes:
 
-- PAO-style random-field initialization
-- 3/2 de-aliasing in spectral space
-- Crank–Nicolson time integration
-- CFL-based adaptive time-stepping
+- **PAO-style random-field initialization**
+- **3/2 de-aliasing** in spectral space
+- **Crank–Nicolson** time integration
+- **CFL-based adaptive time stepping** (Δt updated from the current flow state)
+
+### cupystorm GUI (PySide6)
+Run an cupystorm window that:
+
+- Displays the flow field as a live image (fast Indexed8 palette rendering)
+- Lets you switch displayed variable:
+  - **U**, **V** (velocity components)
+  - **K** (kinetic energy)
+  - **Ω** (vorticity)
+  - **φ** (stream function)
+- Lets you switch **colormap** (several built-in palettes)
+- Lets you change simulation parameters on the fly:
+  - Grid size **N**
+  - Reynolds number **Re**
+  - Initial spectrum peak **K0**
+  - CFL number **CFL**
+  - Max steps / auto-reset limit
+  - GUI update interval (how often to refresh the display)
+
+### Keyboard shortcuts
+Single-key shortcuts (application-wide) for fast control:
+
+- **V**: cycle variable
+- **C**: cycle colormap
+- **N**: cycle grid size
+- **R**: cycle Reynolds number
+- **K**: cycle K0
+- **L**: cycle CFL
+- **S**: cycle max steps
+- **U**: cycle update interval
+
+### Saving / exporting
+From the GUI you can:
+
+- **Save the current frame** as a PNG image
+- **Dump full-resolution fields** to a folder as PGM images:
+  - u-velocity, v-velocity, kinetic energy, vorticity
+
+### Display scaling
+To keep the GUI responsive for large grids, the displayed image is automatically upscaled/downscaled depending on `N`. The window is resized accordingly when you change `N`.
 
 ## Installation
 
@@ -78,9 +118,9 @@ Or let the backend auto-detect:
        $ uv run python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 auto
 
 
-## The DNS with CuPy (4096 x 4096)
+## The DNS with CuPy (8192 x 8192)
 
-![CuPy](https://raw.githubusercontent.com/mannetroll/cupyxturbo/main/window4096.png)
+![CuPy](https://raw.githubusercontent.com/mannetroll/cupyxturbo/main/window8192.png)
 
 
 ## Profiling
@@ -142,4 +182,5 @@ $ uv run --python 3.13 --with "mannetroll-cupyxturbo[cuda]==0.1.1" -- scipyturbo
 ## License
 
 Copyright © Mannetroll
+
 See the project repository for license details.
