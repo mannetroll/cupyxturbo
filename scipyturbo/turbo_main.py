@@ -499,7 +499,7 @@ class MainWindow(QMainWindow):
             try:
                 props = cp.cuda.runtime.getDeviceProperties(0)
                 gpu_name = props["name"].decode(errors="replace")
-                title_backend = f"(CuPyX) {gpu_name}"
+                title_backend = f"(CuPy) {gpu_name}"
             except (RuntimeError, OSError, ValueError, IndexError):
                 pass
 
