@@ -65,9 +65,9 @@ From the project root:
     $ uv run -- turbulence
     $ uv run -- fps
 
-## The DNS with SciPy (256 x 256)
+## The DNS with SciPy (1024 x 1024)
 
-![SciPy](https://raw.githubusercontent.com/mannetroll/cupyxturbo/main/window.png)
+![SciPy](https://raw.githubusercontent.com/mannetroll/cupyxturbo/main/window1024.png)
 
 
 ### Full CLI
