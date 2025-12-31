@@ -724,7 +724,7 @@ class MainWindow(QMainWindow):
         CFL = self.sim.cfl
         STEPS = self.sim.get_iteration()
 
-        folder = f"cupyturbo_{N}_{self.sci_no_plus(Re)}_{K0}_{CFL}_{STEPS}"
+        folder = f"cupyxturbo_{N}_{self.sci_no_plus(Re)}_{K0}_{CFL}_{STEPS}"
 
         # Default root = Desktop
         desktop = QStandardPaths.writableLocation(
