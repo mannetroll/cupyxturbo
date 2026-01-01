@@ -19,4 +19,4 @@ plugins = accessiblebridge,generic,iconengines,imageformats,platforminputcontext
 [nuitka]
 mode = onefile
 # keep this as ONE line (you already discovered why)
-extra_args = --include-package=scipyturbo --include-package=scipy --include-package-data=scipy --include-module=scipy._cyutility --noinclude-qt-translations --windows-disable-console --windows-icon-from-ico=scipyturbo/scipyturbo.ico
+extra_args = --include-package=scipyturbo --include-package=scipy --include-package-data=scipy --include-module=scipy._cyutility --noinclude-qt-translations --windows-icon-from-ico=scipyturbo/scipyturbo.ico
