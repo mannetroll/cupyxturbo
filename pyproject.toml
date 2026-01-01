@@ -19,7 +19,10 @@ dependencies = [
 
 # Optional GPU extra
 [project.optional-dependencies]
-cuda = ["cupy-cuda13x>=13.6.0"]
+cuda = [
+  "cupy-cuda13x>=13.6.0",
+  "fastrlock>=0.8",
+]
 
 [project.scripts]
 turbulence = "scipyturbo.turbo_main:main"
