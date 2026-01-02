@@ -27,6 +27,7 @@ cuda = [
 [project.scripts]
 turbulence = "scipyturbo.turbo_main:main"
 fps = "scipyturbo.turbo_simulator:main"
+cufft = "scipyturbo.turbo_simulator_cufft:main"
 
 # Package discovery
 [tool.setuptools.packages.find]
