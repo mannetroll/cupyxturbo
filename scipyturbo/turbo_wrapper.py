@@ -48,7 +48,7 @@ class DnsSimulator:
         self.max_steps = 5000
 
         # --- ONLY: max SciPy FFT workers on CPU ---
-        self.fft_workers = 4
+        self.fft_workers = 5
         start = perf_counter()
 
         # UR dimensions from Fortran workspace: UR(2+3N/2, 3N/2, 3)
