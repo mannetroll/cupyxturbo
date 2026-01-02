@@ -486,7 +486,7 @@ def dns_pao_host_init(S: DnsState):
     RANVEC = np.zeros(97, dtype=np.float32)
 
     # "warm-up" 97 calls
-    for _ in range(99):
+    for _ in range(97):
         frand(seed)
 
     # fill RANVEC
@@ -1466,9 +1466,9 @@ def run_dns(
         elap = t1 - t0
         fps = (STEPS / elap) if elap > 0 else 0.0
 
-        print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:g}")
-        print(f" Final T={S.t:g}  CN={S.cn:g}  DT={S.dt:g}  VISC={S.visc:g}")
-        print(f" FPS = {fps:g}")
+        print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:8g}")
+        print(f" Final T={S.t:8g}  CN={S.cn:8g}  DT={S.dt:8g}")
+        print(f" FPS = {fps:7g}")
 
 def main():
     #
