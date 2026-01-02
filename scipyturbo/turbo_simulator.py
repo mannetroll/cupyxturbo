@@ -707,28 +707,21 @@ def dns_pao_host_init(S: DnsState):
 # ---------------------------------------------------------------------------
 
 def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
-    """
-    UC_full (3, NZ_full, NK_full) → UR_full (3, NZ_full, NX_full)
-
-    Correct inverse:
-      1) inverse FFT along z  (complex → complex)
-      2) inverse real FFT along x (complex → real)
-
-    ONLY CHANGE: use irfft2 on (z,x) axes.
-    """
     xp = S.xp
     UC = S.uc_full
     fft = S.fft
     if fft is None:
         raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
 
-    if S.backend == "cpu":
-        # overwrite_x reduces temporary allocations on SciPy/pocketfft
-        ur_full = fft.irfft2(UC, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True)
-    else:
-        ur_full = fft.irfft2(UC, s=(S.NZ_full, S.NX_full), axes=(1, 2))
+    UC01 = UC[0:2, :, :]
 
-    S.ur_full[...] = xp.asarray(ur_full, dtype=xp.float32)
+    if S.backend == "cpu":
+        ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True)
+    else:
+        ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
+
+    S.ur_full[0:2, :, :] = xp.asarray(ur01, dtype=xp.float32)
+    S.ur_full[2, :, :] = xp.float32(0.0)
 
 
 def vfft_full_forward_ur_full_to_uc_full(S: DnsState) -> None:
@@ -1036,8 +1029,6 @@ def dns_step3(S: DnsState) -> None:
 
 # ===============================================================
 # STEP2A core (dealias + reshuffle + inverse FFT)
-#   Python/CuPy version of dnsCudaStep2A_full
-#   Operates on S.uc_full (3, NZ_full, NK_full) and S.ur_full.
 # ===============================================================
 def dns_step2a(S: DnsState) -> None:
     """
@@ -1057,71 +1048,48 @@ def dns_step2a(S: DnsState) -> None:
     N = S.Nbase
     NX = S.NX
     NZ = S.NZ
-    NX_full = S.NX_full   # 3*N/2
-    NZ_full = S.NZ_full   # 3*N/2
-    NK_full = S.NK_full   # 3*N/4+1
+    NX_full = S.NX_full
+    NZ_full = S.NZ_full
+    NK_full = S.NK_full
 
-    UC = S.uc_full  # shape (3, NZ_full, NK_full), complex64
+    UC = S.uc_full  # (3, NZ_full, NK_full), complex64
 
-    # ----------------------------------------------------------
     # 1) Dealias high-kx modes for comp 0,1
-    #    (k_step2a_full_zero_highkx)
-    #    In CUDA: high kx region [N/2 .. 3N/4] is zeroed.
-    # ----------------------------------------------------------
-    nx_start = N // 2           # N/2
-    nx_end = 3 * N // 4       # 3N/4
-    hi_start = nx_start
-    hi_end = min(nx_end, NK_full - 1)
-
+    hi_start = N // 2
+    hi_end = min(3 * N // 4, NK_full - 1)
     if hi_start <= hi_end:
-        # comps 0,1 correspond to U1, U3
         UC[0:2, :, hi_start:hi_end + 1] = xp.complex64(0.0 + 0.0j)
 
-    # ----------------------------------------------------------
-    # 2) Z-reshuffle low-kz strip (Fortran STEP2A-style)
-    #
-    # For the 3/2 grid (NZ_full = 3N/2) this is a contiguous block move:
-    #
-    #   z_mid = N/2 .. N-1
-    #   z_top = N   .. 3N/2-1
-    #
-    # and only for kx < min(N/2, NK_full).
-    # ----------------------------------------------------------
+    # 2) Z-reshuffle low-kz strip for comp 0,1
     halfN = N // 2
     k_max = min(halfN, NK_full)
-
     if k_max > 0:
         z_mid_start = halfN
-        z_mid_end = halfN + halfN    # == N
+        z_mid_end = N
         z_top_start = N
-        z_top_end = N + halfN        # == 3N/2 == NZ_full
-
+        z_top_end = N + halfN  # == NZ_full
         UC[0:2, z_top_start:z_top_end, :k_max] = UC[0:2, z_mid_start:z_mid_end, :k_max]
         UC[0:2, z_mid_start:z_mid_end, :k_max] = xp.complex64(0.0 + 0.0j)
 
-    # ----------------------------------------------------------
-    # 3+4) Inverse transforms via irfft2, then scale to match CUFFT
-    # ----------------------------------------------------------
+    # 3+4) Inverse transforms: ONLY comp 0,1 (u,w). Comp 2 is not needed here.
     fft = S.fft
     if fft is None:
         raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
 
-    # irfft2 includes 1/(NZ_full*NX_full); CUFFT inverse is unscaled
+    UC01 = UC[0:2, :, :]  # view: (2, NZ_full, NK_full)
+
     if S.backend == "cpu":
-        ur_full = fft.irfft2(UC, s=(NZ_full, NX_full), axes=(1, 2), overwrite_x=True)
+        ur01 = fft.irfft2(UC01, s=(NZ_full, NX_full), axes=(1, 2), overwrite_x=True)
     else:
-        ur_full = fft.irfft2(UC, s=(NZ_full, NX_full), axes=(1, 2))
+        ur01 = fft.irfft2(UC01, s=(NZ_full, NX_full), axes=(1, 2))
 
-    ur_full *= (NZ_full * NX_full)
-    S.ur_full[...] = ur_full
+    # CUFFT inverse is unscaled; scipy irfft2 includes 1/(NZ_full*NX_full)
+    ur01 *= xp.float32(NZ_full * NX_full)
 
-    # ----------------------------------------------------------
-    # 5) Downmap compact N×N block (centered, like
-    #    k_copy_ur_full_to_ur_centered)
-    #
-    # ur_full layout: (3, NZ_full, NX_full)
-    # ur         : (NZ, NX, 3)
-    # ----------------------------------------------------------
+    S.ur_full[0:2, :, :] = ur01
+    S.ur_full[2, :, :] = xp.float32(0.0)  # will be overwritten in STEP2B anyway
+
+    # 5) Downmap compact N×N block into UR (only need comps 0,1)
     off_x = (NX_full - NX) // 2
     off_z = (NZ_full - NZ) // 2
 
