@@ -288,6 +288,7 @@ class DnsState:
     step3_NUM: any = None         # complex64 (NZ, NX_half)
 
     step3_mask_ix0: any = None    # bool (NZ,)
+    step3_inv_gamma0: any = None  # float32 (NZ,)  precomputed 1/gamma for ix=0 branch (0 where invalid)
     step3_divxz: any = None       # float32 scalar
 
     def sync(self):
@@ -452,6 +453,15 @@ def create_dns_state(
 
     # ix=0 branch mask (Z>=2 and GAMMA!=0), constant
     state.step3_mask_ix0 = (state.step3_z_indices >= 1) & (xp.abs(state.gamma) > 0.0)
+
+    # Precompute 1/gamma for ix=0 branch to avoid fancy indexing on GPU
+    state.step3_inv_gamma0 = xp.zeros((NZ,), dtype=xp.float32)
+    xp.divide(
+        xp.float32(1.0),
+        state.gamma,
+        out=state.step3_inv_gamma0,
+        where=state.step3_mask_ix0,
+    )
 
     # DIVXZ = 1/(3NX/2 * 3NZ/2), constant for fixed N
     NX32 = xp.float32(1.5) * xp.float32(state.Nbase)
@@ -973,9 +983,8 @@ def dns_step3(S: DnsState) -> None:
         out2[:, 1:] *= alfa[1:][None, :]
         out2[:, 1:] *= xp.complex64(1.0j)
 
-    out1[:, 0] = 0
-    mask0 = S.step3_mask_ix0
-    out1[mask0, 0] = xp.complex64(-1.0j) * (om2[mask0, 0] / gamma[mask0])
+    # GPU-optimized ix=0 branch: no fancy indexing gather/scatter
+    out1[:, 0] = xp.complex64(-1.0j) * (om2[:, 0] * S.step3_inv_gamma0)
 
     uc_full[0, :NZ, :NX_half] = out1
     uc_full[1, :NZ, :NX_half] = out2
