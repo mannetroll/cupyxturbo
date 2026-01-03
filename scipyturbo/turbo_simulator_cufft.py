@@ -377,6 +377,10 @@ def create_dns_state(
 
     # Reusable cuFFT plans (GPU only)
     if state.backend == "gpu":
+        plan_cache = state.xp.fft.config.get_plan_cache()
+        plan_cache.set_size(128)
+        plan_cache.set_memsize(512 * 1024 * 1024)
+
         plan_mod = None
         if _cpfft is not None and hasattr(_cpfft, "get_fft_plan"):
             plan_mod = _cpfft
