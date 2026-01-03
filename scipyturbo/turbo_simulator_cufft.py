@@ -475,7 +475,7 @@ def dns_pao_host_init(S: DnsState):
     K0 = np.float32(S.K0)
     NORM = PI * K0 * K0
 
-    print("--- INITIALIZING PAO (SciPy/CuPy) ---", _dt.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    print("--- INITIALIZING SciPy/CuPy ---", _dt.datetime.now().strftime("%Y-%m-%d %H:%M"))
     print(f" N={N}, K0={int(K0)}, Re={S.Re}")
 
     # ------------------------------------------------------------------
