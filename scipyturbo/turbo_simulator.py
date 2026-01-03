@@ -404,7 +404,10 @@ def create_dns_state(
                 value_type="C2R",
             )
 
-        print(f"FFT plan_mod: {plan_mod}")
+        if plan_mod is None:
+            print("FFT plan_mod: None")
+        else:
+            print(f"FFT plan_mod: {plan_mod.__name__}")
 
     # PAO-style initialization (dnsCudaPaoHostInit)
     dns_pao_host_init(state)
