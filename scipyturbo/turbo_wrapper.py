@@ -88,8 +88,15 @@ class DnsSimulator:
             #   3) set DT and CN from CFL condition
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
+
             # CFLM * DT * PI = CFLNUM  →  DT = CFLNUM / (CFLM * PI)
-            self.state.dt = self.state.cflnum / (CFLM * math.pi)
+            if self.state.backend == "gpu":
+                # CFLM is a device scalar; pull to host ONCE here so dt/cn/cnm1 stay floats
+                CFLM_h = float(CFLM.item()) if hasattr(CFLM, "item") else float(CFLM)
+                self.state.dt = float(self.state.cflnum) / (CFLM_h * math.pi)
+            else:
+                self.state.dt = self.state.cflnum / (CFLM * math.pi)
+
             self.state.cn = 1.0
             self.state.cnm1 = 0.0
 
@@ -180,7 +187,12 @@ class DnsSimulator:
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
 
-        self.state.dt = self.state.cflnum / (CFLM * math.pi)
+        if self.state.backend == "gpu":
+            CFLM_h = float(CFLM.item()) if hasattr(CFLM, "item") else float(CFLM)
+            self.state.dt = float(self.state.cflnum) / (CFLM_h * math.pi)
+        else:
+            self.state.dt = self.state.cflnum / (CFLM * math.pi)
+
         self.state.cn = 1.0
         self.state.cnm1 = 0.0
 
@@ -226,7 +238,12 @@ class DnsSimulator:
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
 
-        self.state.dt = self.state.cflnum / (CFLM * math.pi)
+        if self.state.backend == "gpu":
+            CFLM_h = float(CFLM.item()) if hasattr(CFLM, "item") else float(CFLM)
+            self.state.dt = float(self.state.cflnum) / (CFLM_h * math.pi)
+        else:
+            self.state.dt = self.state.cflnum / (CFLM * math.pi)
+
         self.state.cn = 1.0
         self.state.cnm1 = 0.0
 
