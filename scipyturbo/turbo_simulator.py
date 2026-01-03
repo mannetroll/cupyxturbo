@@ -1045,7 +1045,7 @@ def dns_step2a(S: DnsState) -> None:
 # NEXTDT — CFL based timestep
 # ---------------------------------------------------------------------------
 
-def compute_cflm(S: DnsState) -> float:
+def compute_cflm(S: DnsState):
     xp = S.xp
 
     NX3D2 = S.NX_full
@@ -1061,19 +1061,23 @@ def compute_cflm(S: DnsState) -> float:
     xp.abs(w, out=absw)
     xp.add(tmp, absw, out=tmp)
 
-    CFLM = float(xp.max(tmp) * S.inv_dx)
+    CFLM = xp.max(tmp) * S.inv_dx
+    if S.backend == "cpu":
+        return float(CFLM)
     return CFLM
 
 
 def next_dt(S: DnsState) -> None:
     PI = math.pi
-
     CFLM = compute_cflm(S)
+
+    if S.backend == "gpu":
+        CFLM = float(CFLM)  # one sync here, but only when next_dt is called
+
     if CFLM <= 0.0 or S.dt <= 0.0:
         return
 
     CFL = CFLM * S.dt * PI
-
     S.cn = 0.8 + 0.2 * (S.cflnum / CFL)
     S.dt = S.dt * S.cn
 
