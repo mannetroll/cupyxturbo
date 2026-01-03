@@ -277,6 +277,28 @@ class DnsSimulator:
 
         return pix.astype(np.uint8)
 
+    def _float_to_pixels_gpu(self, field_cp):
+        """
+        GPU path: normalize->uint8 on GPU; caller transfers uint8 only.
+        """
+        import cupy as cp  # type: ignore
+
+        fmin = field_cp.min()
+        fmax = field_cp.max()
+        rng = fmax - fmin
+
+        eps = cp.float32(1.0e-12)
+        is_const = cp.abs(rng) <= eps
+
+        denom = cp.where(is_const, cp.float32(1.0), rng)
+        norm = (field_cp - fmin) / denom
+        pixf = cp.float32(1.0) + norm * cp.float32(254.0)
+        pixf = cp.clip(pixf, cp.float32(1.0), cp.float32(255.0))
+
+        pix = pixf.astype(cp.uint8)
+        pix = cp.where(is_const, cp.uint8(128), pix)
+        return pix
+
     # ------------------------------------------------------------------
     def _snapshot(self, comp: int) -> np.ndarray:
         """
@@ -292,11 +314,12 @@ class DnsSimulator:
 
         if S.backend == "gpu":
             import cupy as cp  # type: ignore
-            field = cp.asnumpy(S.ur_full[idx, :, :])
+            field_cp = S.ur_full[idx, :, :]
+            pix_cp = self._float_to_pixels_gpu(field_cp)
+            return cp.asnumpy(pix_cp)
         else:
             field = np.asarray(S.ur_full[idx, :, :])
-
-        return self._float_to_pixels(field)
+            return self._float_to_pixels(field)
 
     # ------------------------------------------------------------------
     def make_pixels(self, comp: int = 1) -> np.ndarray:
@@ -323,35 +346,46 @@ class DnsSimulator:
 
         if var == self.VAR_U:
             plane = self._snapshot(1)
+
         elif var == self.VAR_V:
             plane = self._snapshot(2)
+
         elif var == self.VAR_ENERGY:
             # Use dns_all kinetic helper: fills ur_full[2,:,:]
             dns_all.dns_kinetic(S)
             if S.backend == "gpu":
                 import cupy as cp  # type: ignore
-                field = cp.asnumpy(S.ur_full[2, :, :])
+                field_cp = S.ur_full[2, :, :]
+                pix_cp = self._float_to_pixels_gpu(field_cp)
+                plane = cp.asnumpy(pix_cp)
             else:
                 field = np.asarray(S.ur_full[2, :, :])
-            plane = self._float_to_pixels(field)
+                plane = self._float_to_pixels(field)
+
         elif var == self.VAR_OMEGA:
             # Use dns_all omega→physical helper: fills ur_full[2,:,:]
             dns_all.dns_om2_phys(S)
             if S.backend == "gpu":
                 import cupy as cp  # type: ignore
-                field = cp.asnumpy(S.ur_full[2, :, :])
+                field_cp = S.ur_full[2, :, :]
+                pix_cp = self._float_to_pixels_gpu(field_cp)
+                plane = cp.asnumpy(pix_cp)
             else:
                 field = np.asarray(S.ur_full[2, :, :])
-            plane = self._float_to_pixels(field)
+                plane = self._float_to_pixels(field)
+
         elif var == self.VAR_STREAM:
             # Use dns_all stream-function helper: fills ur_full[2,:,:]
             dns_all.dns_stream_func(S)
             if S.backend == "gpu":
                 import cupy as cp  # type: ignore
-                field = cp.asnumpy(S.ur_full[2, :, :])
+                field_cp = S.ur_full[2, :, :]
+                pix_cp = self._float_to_pixels_gpu(field_cp)
+                plane = cp.asnumpy(pix_cp)
             else:
                 field = np.asarray(S.ur_full[2, :, :])
-            plane = self._float_to_pixels(field)
+                plane = self._float_to_pixels(field)
+
         else:
             plane = self._snapshot(1)
 
@@ -361,17 +395,10 @@ class DnsSimulator:
     def get_frame_pixels(self) -> np.ndarray:
         """Used by the Qt app worker thread.
 
-        FIELD2PIX / dns_frame currently return 32-bit packed gray pixels
-        (0x00LLLLLL). Here we reduce that once to an 8-bit contiguous
-        array so the GUI can push it straight into a QImage.
+        Return an 8-bit contiguous array so the GUI can push it straight into a QImage.
         """
         plane = self.make_pixels_component(self.current_var)
-
-        # plane is already uint8 [0..255]; we keep the original logic
-        #   pixels32 & 0xFF  → pixels8
-        pixels32 = np.asarray(plane, dtype=np.uint32)
-        pixels8 = (pixels32 & 0xFF).astype(np.uint8)
-        return np.ascontiguousarray(pixels8)
+        return np.ascontiguousarray(plane, dtype=np.uint8)
 
     def set_variable(self, var: int) -> None:
         """Select which variable the GUI should visualize."""
