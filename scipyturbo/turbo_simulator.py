@@ -60,12 +60,6 @@ try:
 except Exception:
     _cpfft = None
 
-# cuFFT plan helper (GPU only): reusable explicit plans
-try:
-    import cupyx.scipy.fftpack as _cpfftpack  # type: ignore
-except Exception:
-    _cpfftpack = None
-
 
 def _fft_mod_for_state(S: "DnsState"):
     """
@@ -388,8 +382,6 @@ def create_dns_state(
         plan_mod = None
         if _cpfft is not None and hasattr(_cpfft, "get_fft_plan"):
             plan_mod = _cpfft
-        elif _cpfftpack is not None and hasattr(_cpfftpack, "get_fft_plan"):
-            plan_mod = _cpfftpack
 
         if plan_mod is not None:
             # Forward: rfft2 on real UR_full over (z,x) axes
