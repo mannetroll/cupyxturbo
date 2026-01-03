@@ -404,6 +404,8 @@ def create_dns_state(
                 value_type="C2R",
             )
 
+        print(f"FFT plan_mod: {plan_mod}")
+
     # PAO-style initialization (dnsCudaPaoHostInit)
     dns_pao_host_init(state)
 
