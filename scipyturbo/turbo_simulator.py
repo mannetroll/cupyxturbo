@@ -1276,6 +1276,7 @@ def run_dns(
             dns_step2b(S)
             dns_step3(S)
             dns_step2a(S)
+
             next_dt(S)
             S.t += dt_old
 
