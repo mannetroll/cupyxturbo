@@ -451,17 +451,17 @@ def create_dns_state(
     state.step3_DEN = xp.empty((NZ, NX_half), dtype=xp.float32)
     state.step3_NUM = xp.empty((NZ, NX_half), dtype=xp.complex64)
 
-    # ix=0 branch mask (Z>=2 and GAMMA!=0), constant
+    # ix=0 branch mask (Z>=1 and GAMMA!=0), constant
     state.step3_mask_ix0 = (state.step3_z_indices >= 1) & (xp.abs(state.gamma) > 0.0)
 
-    # Precompute 1/gamma for ix=0 branch to avoid fancy indexing on GPU
-    state.step3_inv_gamma0 = xp.zeros((NZ,), dtype=xp.float32)
-    xp.divide(
-        xp.float32(1.0),
-        state.gamma,
-        out=state.step3_inv_gamma0,
-        where=state.step3_mask_ix0,
-    )
+    # Precompute safe inv_gamma for ix=0 (avoid xp.divide(where=...) which CuPy rejects here)
+    mask0 = xp.asarray(state.step3_mask_ix0)  # stays on-GPU for CuPy
+    safe_gamma = xp.where(mask0, state.gamma, xp.float32(1.0))  # no zeros in denominator
+    inv_gamma0 = (xp.float32(1.0) / safe_gamma).astype(xp.float32, copy=False)
+    inv_gamma0 *= mask0.astype(xp.float32, copy=False)  # zero out invalid lanes
+
+    state.step3_mask_ix0 = mask0
+    state.step3_inv_gamma0 = inv_gamma0
 
     # DIVXZ = 1/(3NX/2 * 3NZ/2), constant for fixed N
     NX32 = xp.float32(1.5) * xp.float32(state.Nbase)
@@ -984,7 +984,8 @@ def dns_step3(S: DnsState) -> None:
         out2[:, 1:] *= xp.complex64(1.0j)
 
     # GPU-optimized ix=0 branch: no fancy indexing gather/scatter
-    out1[:, 0] = xp.complex64(-1.0j) * (om2[:, 0] * S.step3_inv_gamma0)
+    out1[:, 0] = 0
+    out1[:, 0] = xp.complex64(-1.0j) * om2[:, 0] * S.step3_inv_gamma0
 
     uc_full[0, :NZ, :NX_half] = out1
     uc_full[1, :NZ, :NX_half] = out2
