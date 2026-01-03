@@ -1064,6 +1064,7 @@ def compute_cflm(S: DnsState):
     CFLM = xp.max(tmp) * S.inv_dx
     if S.backend == "cpu":
         return float(CFLM)
+
     return CFLM
 
 
@@ -1258,9 +1259,15 @@ def run_dns(
         dns_step2a(S)
 
         CFLM = compute_cflm(S)
-        S.dt = S.cflnum / (CFLM * math.pi)
+        if S.backend == "gpu":
+            CFLM0 = float(CFLM)  # one sync here at init (fine)
+        else:
+            CFLM0 = CFLM
+
+        S.dt = S.cflnum / (CFLM0 * math.pi)
         S.cn = 1.0
         S.cnm1 = 0.0
+        S.t = 0.0
 
         print(f" [NEXTDT INIT] CFLM={CFLM:11.4f} DT={S.dt:11.7f} CN={S.cn:11.7f}")
         print(f" Initial DT={S.dt:11.7f} CN={S.cn:11.7f}")
