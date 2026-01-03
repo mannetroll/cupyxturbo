@@ -73,6 +73,7 @@ def _fft_mod_for_state(S: "DnsState"):
         return S.xp.fft
     return _spfft
 
+
 # ===============================================================
 # Fortran-style random generator used in PAO (port of frand)
 # ===============================================================
@@ -125,7 +126,6 @@ def get_xp(backend: Literal["cpu", "gpu", "auto"] = "auto"):
 # ---------------------------------------------------------------------------
 # Fortran-style random generator used in PAO, port of frand(seed)
 # ---------------------------------------------------------------------------
-
 class Frand:
     """
     Port of the tiny LCG from dns_all.cu:
@@ -206,7 +206,6 @@ def dump_uc_full_csv(S: "DnsState", UC_full, comp: int):
 # ---------------------------------------------------------------------------
 # DNS state  (Python equivalent of DnsDeviceState)
 # ---------------------------------------------------------------------------
-
 @dataclass
 class DnsState:
     xp: any                 # scipy or cupy module
@@ -243,10 +242,10 @@ class DnsState:
     cfl_absw: any = None
 
     # Time integration
-    t: float = 0.0
-    dt: float = 0.0
-    cn: float = 1.0
-    cnm1: float = 0.0
+    t: any = 0.0
+    dt: any = 0.0
+    cn: any = 1.0
+    cnm1: any = 0.0
     it: int = 0
 
     # Spectral wavenumber vectors
@@ -299,7 +298,6 @@ class DnsState:
 # ---------------------------------------------------------------------------
 # Helper to create a DnsState (dnsCudaInit equivalent)
 # ---------------------------------------------------------------------------
-
 def create_dns_state(
     N: int = 8,
     Re: float = 1e5,
@@ -459,6 +457,7 @@ def create_dns_state(
     state.step3_divxz = xp.float32(1.0) / (NX32 * NZ32)
 
     return state
+
 
 # ===============================================================
 # Python/Numpy/Scipy port of dnsCudaPaoHostInit, wired into DnsState
@@ -732,7 +731,6 @@ def dns_pao_host_init(S: DnsState):
 # ---------------------------------------------------------------------------
 # FFT helpers (vfft_full_* equivalents)
 # ---------------------------------------------------------------------------
-
 def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
     xp = S.xp
     UC = S.uc_full
@@ -790,7 +788,6 @@ def vfft_full_forward_ur_full_to_uc_full(S: DnsState) -> None:
 # ---------------------------------------------------------------------------
 # CALCOM — spectral vorticity from UC_full (dnsCudaCalcom)
 # ---------------------------------------------------------------------------
-
 def dns_calcom_from_uc_full(S: DnsState) -> None:
     """
     Python/xp port of dnsCudaCalcom:
@@ -903,9 +900,15 @@ def dns_step3(S: DnsState) -> None:
     NZ = Nbase
 
     visc = xp.float32(S.visc)
-    dt = xp.float32(S.dt)
-    cn = xp.float32(S.cn)
-    cnm1 = xp.float32(S.cnm1)
+
+    if S.backend == "gpu":
+        dt = S.dt
+        cn = S.cn
+        cnm1 = S.cnm1
+    else:
+        dt = xp.float32(S.dt)
+        cn = xp.float32(S.cn)
+        cnm1 = xp.float32(S.cnm1)
 
     z_spec = S.step3_z_spec
     divxz = S.step3_divxz
@@ -980,7 +983,7 @@ def dns_step3(S: DnsState) -> None:
     uc_full[0, :NZ, :NX_half] = out1
     uc_full[1, :NZ, :NX_half] = out2
 
-    S.cnm1 = float(cn)
+    S.cnm1 = cn if S.backend == "gpu" else float(cn)
 
 
 # ===============================================================
@@ -1044,8 +1047,7 @@ def dns_step2a(S: DnsState) -> None:
 # ---------------------------------------------------------------------------
 # NEXTDT — CFL based timestep
 # ---------------------------------------------------------------------------
-
-def compute_cflm(S: DnsState) -> float:
+def compute_cflm(S: DnsState):
     xp = S.xp
 
     NX3D2 = S.NX_full
@@ -1061,21 +1063,36 @@ def compute_cflm(S: DnsState) -> float:
     xp.abs(w, out=absw)
     xp.add(tmp, absw, out=tmp)
 
-    CFLM = float(xp.max(tmp) * S.inv_dx)
+    CFLM = xp.max(tmp) * S.inv_dx
+    if S.backend == "cpu":
+        return float(CFLM)
     return CFLM
 
 
 def next_dt(S: DnsState) -> None:
-    PI = math.pi
+    if S.backend == "cpu":
+        PI = math.pi
 
-    CFLM = compute_cflm(S)
-    if CFLM <= 0.0 or S.dt <= 0.0:
+        CFLM = compute_cflm(S)
+        if CFLM <= 0.0 or S.dt <= 0.0:
+            return
+
+        CFL = CFLM * S.dt * PI
+
+        S.cn = 0.8 + 0.2 * (S.cflnum / CFL)
+        S.dt = S.dt * S.cn
         return
 
-    CFL = CFLM * S.dt * PI
+    # GPU: keep CFLM/dt/cn/cnm1 on device; only copy to host for logging elsewhere.
+    xp = S.xp
+    CFLM = compute_cflm(S)  # device scalar
+    PI = xp.float32(math.pi)
 
-    S.cn = 0.8 + 0.2 * (S.cflnum / CFL)
-    S.dt = S.dt * S.cn
+    CFL = CFLM * S.dt * PI
+    cn = xp.float32(0.8) + xp.float32(0.2) * (xp.float32(S.cflnum) / CFL)
+
+    S.cn = cn
+    S.dt = S.dt * cn
 
 
 # ===============================================================
@@ -1132,7 +1149,6 @@ def dump_field_as_pgm_full(S: DnsState, comp: int, filename: str) -> None:
 # ---------------------------------------------------------------------------
 # Helpers for visualization fields (energy, vorticity, streamfunction)
 # ---------------------------------------------------------------------------
-
 def dns_kinetic(S: DnsState) -> None:
     xp = S.xp
 
@@ -1218,6 +1234,14 @@ def dns_stream_func(S: DnsState) -> None:
     S.ur_full[2, :, :] = phys
 
 
+def _scalar_to_float(x) -> float:
+    try:
+        return float(x)
+    except TypeError:
+        # e.g. 0-d cupy array
+        return float(x.item())
+
+
 # ---------------------------------------------------------------------------
 # Main driver (Python version of main in dns_all.cu)
 # ---------------------------------------------------------------------------
@@ -1254,12 +1278,24 @@ def run_dns(
         dns_step2a(S)
 
         CFLM = compute_cflm(S)
-        S.dt = S.cflnum / (CFLM * math.pi)
-        S.cn = 1.0
-        S.cnm1 = 0.0
 
-        print(f" [NEXTDT INIT] CFLM={CFLM:11.4f} DT={S.dt:11.7f} CN={S.cn:11.7f}")
-        print(f" Initial DT={S.dt:11.7f} CN={S.cn:11.7f}")
+        if S.backend == "gpu":
+            # Keep dt/cn/cnm1/t on device; only convert for logging.
+            xp = S.xp
+            S.dt = xp.asarray(xp.float32(S.cflnum)) / (CFLM * xp.float32(math.pi))
+            S.cn = xp.asarray(xp.float32(1.0))
+            S.cnm1 = xp.asarray(xp.float32(0.0))
+            S.t = xp.asarray(xp.float32(0.0))
+
+            print(f" [NEXTDT INIT] CFLM={_scalar_to_float(CFLM):11.4f} DT={_scalar_to_float(S.dt):11.7f} CN={_scalar_to_float(S.cn):11.7f}")
+            print(f" Initial DT={_scalar_to_float(S.dt):11.7f} CN={_scalar_to_float(S.cn):11.7f}")
+        else:
+            S.dt = S.cflnum / (CFLM * math.pi)
+            S.cn = 1.0
+            S.cnm1 = 0.0
+
+            print(f" [NEXTDT INIT] CFLM={CFLM:11.4f} DT={S.dt:11.7f} CN={S.cn:11.7f}")
+            print(f" Initial DT={S.dt:11.7f} CN={S.cn:11.7f}")
 
         S.sync()
         t0 = time.perf_counter()
@@ -1277,7 +1313,13 @@ def run_dns(
             S.t += dt_old
 
             if (it % 100) == 0 or it == 1 or it == STEPS:
-                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f}")
+                if S.backend == "gpu":
+                    print(
+                        f" ITERATION {it:6d} T={_scalar_to_float(S.t):12.10f} "
+                        f"DT={_scalar_to_float(S.dt):10.8f} CN={_scalar_to_float(S.cn):10.8f}"
+                    )
+                else:
+                    print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f}")
 
         S.sync()
         t1 = time.perf_counter()
@@ -1286,8 +1328,12 @@ def run_dns(
         fps = (STEPS / elap) if elap > 0 else 0.0
 
         print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:8g}")
-        print(f" Final T={S.t:8g}  CN={S.cn:8g}  DT={S.dt:8g}")
+        if S.backend == "gpu":
+            print(f" Final T={_scalar_to_float(S.t):8g}  CN={_scalar_to_float(S.cn):8g}  DT={_scalar_to_float(S.dt):8g}")
+        else:
+            print(f" Final T={S.t:8g}  CN={S.cn:8g}  DT={S.dt:8g}")
         print(f" FPS = {fps:7g}")
+
 
 def main():
     args = sys.argv[1:]
