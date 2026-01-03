@@ -1277,7 +1277,6 @@ def run_dns(
             dns_step3(S)
             dns_step2a(S)
             next_dt(S)
-
             S.t += dt_old
 
             if (it % 100) == 0 or it == 1 or it == STEPS:
