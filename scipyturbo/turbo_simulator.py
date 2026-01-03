@@ -1229,7 +1229,7 @@ def run_dns(
     CFL: float = 0.75,
     backend: Literal["cpu", "gpu", "auto"] = "auto",
 ) -> None:
-    print("--- INITIALIZING DNS_ALL PYTHON (SciPy/CuPy) ---")
+    print("--- RUN DNS ---")
     print(f" N   = {N}")
     print(f" Re  = {Re}")
     print(f" K0  = {K0}")
