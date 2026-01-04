@@ -361,7 +361,7 @@ class MainWindow(QMainWindow):
         # Stop button
         self.stop_button = QPushButton()
         self.stop_button.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_MediaStop))
-        self.stop_button.setToolTip("S: Stop simulation")
+        self.stop_button.setToolTip("H: Stop simulation")
         self.stop_button.setFixedSize(28, 28)
         self.stop_button.setIconSize(QSize(14, 14))
 
