@@ -1441,8 +1441,11 @@ def run_dns(
     print(f" CFL  = {CFL}")
     print(f" requested = {backend}")
 
+    start =  time.perf_counter()
     S = create_dns_state(N=N, Re=Re, K0=K0, CFL=CFL, backend=backend)
     print(f" effective = {S.backend} (xp = {'cupy' if S.backend == 'gpu' else 'scipy'})")
+    elapsed = time.perf_counter() - start
+    print(f" DNS initialization took {elapsed:.3f} seconds")
 
     if S.backend == "cpu" and _spfft is not None and S.fft_workers > 1:
         fft_ctx = _spfft.set_workers(S.fft_workers)
