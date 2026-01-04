@@ -853,10 +853,7 @@ class MainWindow(QMainWindow):
 
     def on_cfl_changed(self, value: str) -> None:
         self.sim.cfl = float(value)
-        self.sim.reset_field()
-        self._sim_start_time = time.time()
-        self._sim_start_iter = self.sim.get_iteration()
-        self._update_image(self.sim.get_frame_pixels())
+        self.sim.state.cflnum = self.sim.cfl
 
     def on_steps_changed(self, value: str) -> None:
         self.sim.max_steps = int(float(value))
