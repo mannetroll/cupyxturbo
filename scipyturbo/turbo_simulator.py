@@ -1,5 +1,5 @@
 """
-turbo_simulator.py — 2D Homogeneous Turbulence DNS (SciPy / CuPy port)
+turbo_simulator_numba.py — 2D Homogeneous Turbulence DNS (SciPy / CuPy port)
 
 This is a structural port of dns_all.cu to Python.
 
@@ -57,6 +57,190 @@ except Exception:  # CuPy is optional
     print(" CuPy not installed")
 
 import numpy as np  # in addition to your existing _np alias, this is fine
+
+# ===============================================================
+# Optional Numba acceleration (CPU-only) for PAO initialization
+# ===============================================================
+try:
+    import numba as _nb  # type: ignore
+except Exception:
+    _nb = None
+
+if _nb is not None:
+    @_nb.njit(cache=True)
+    def _frand_step_numba(seed: int):
+        """
+        Port of the Fortran LCG used in PAO (same constants as frand()).
+        Returns updated seed and r in float32.
+        """
+        IMM = 420029
+        IT = 2017
+        ID = 5011
+        seed = (seed * IMM + IT) % ID
+        return seed, np.float32(seed) / np.float32(ID)
+
+    @_nb.njit(cache=True)
+    def _pao_numba_build_ur_and_stats(N: int, NE: int, K0: np.float32, Re: np.float32, seed_init: int, alfa: np.ndarray, gamma: np.ndarray):
+        """
+        Numba-accelerated PAO core:
+
+          - Generate isotropic random spectrum (Fortran DO 500/510 loops)
+          - Hermitian symmetry in Z (Fortran DO 600)
+          - Compute averages A(1..7), E110, Q2, W2, VISC (Fortran DO 800/810)
+          - Reshuffle (Fortran DO 1000 block)
+
+        IMPORTANT:
+          - Keep SERIAL loop order to preserve deterministic RNG call sequence for a given seed.
+          - No prints inside Numba.
+        """
+        ND2 = N // 2
+        NED2 = NE // 2
+        PI = np.float32(3.14159265358979)
+
+        # ------------------------------------------------------------------
+        # Fortran random vector RANVEC(97)
+        # ------------------------------------------------------------------
+        seed = int(seed_init)
+        RANVEC = np.zeros(97, dtype=np.float32)
+
+        # "warm-up" 97 calls
+        for _ in range(97):
+            seed, _ = _frand_step_numba(seed)
+
+        # fill RANVEC
+        for i in range(97):
+            seed, r = _frand_step_numba(seed)
+            RANVEC[i] = r
+
+        NORM = PI * K0 * K0
+
+        # ------------------------------------------------------------------
+        # Host spectral UR: complex field UR(kx,z,comp)
+        # comp=0 → u1, comp=1 → u3 (Fortran components 1 and 2)
+        #
+        #   UR[x,z,c]  where  x ∈ [0..ND2-1], z ∈ [0..NE-1], c ∈ {0,1}
+        # ------------------------------------------------------------------
+        UR = np.zeros((ND2, NE, 2), dtype=np.complex64)
+
+        # ------------------------------------------------------------------
+        # Generate isotropic random spectrum (Fortran DO 500/510 loops)
+        # ------------------------------------------------------------------
+        for z in range(NE):
+            if z % 1000 == 0:
+                print(f"z={z}/{NE}")
+            gz = gamma[z]
+            for x in range(NED2):
+                seed, r = _frand_step_numba(seed)
+
+                # random_from_vec(r)
+                idx = int(float(r) * 97.0)
+                if idx < 0:
+                    idx = 0
+                if idx > 96:
+                    idx = 96
+                v = RANVEC[idx]
+                RANVEC[idx] = r
+
+                th = np.float32(2.0) * PI * v
+                ARG = np.complex64(np.cos(th) + 1j * np.sin(th))
+
+                ax = alfa[x]
+                K2 = np.float32(ax * ax + gz * gz)
+                if K2 > 0.0:
+                    K = np.float32(np.sqrt(K2))
+                else:
+                    K = np.float32(0.0)
+
+                if ax == 0.0:
+                    # ALFA(X) == 0: purely u1 mode
+                    UR[x, z, 1] = np.complex64(0.0 + 0.0j)
+
+                    ABSU2 = np.float32(np.exp(- (K / K0) * (K / K0)) / NORM)
+                    amp = np.float32(np.sqrt(ABSU2))
+                    UR[x, z, 0] = np.complex64(amp) * ARG
+                else:
+                    denom = np.float32(1.0) + (gz * gz) / (ax * ax)
+                    ABSW2 = np.float32(np.exp(- (K / K0) * (K / K0)) / (denom * NORM))
+                    ampw = np.float32(np.sqrt(ABSW2))
+
+                    w = np.complex64(ampw) * ARG
+                    u = np.complex64(- (gz / ax)) * w  # -GAMMA/ALFA * UR(.,.,2)
+
+                    UR[x, z, 1] = w
+                    UR[x, z, 0] = u
+
+        # Special zero modes (UR(1,1,1)=0, UR(1,1,2)=0 in 1-based Fortran)
+        UR[0, 0, 0] = np.complex64(0.0 + 0.0j)
+        UR[0, 0, 1] = np.complex64(0.0 + 0.0j)
+
+        # ------------------------------------------------------------------
+        # Hermitian symmetry in Z (Fortran DO 600)
+        # ------------------------------------------------------------------
+        for z in range(1, NED2):
+            UR[0, NE - z, 0] = np.conj(UR[0, z, 0])
+            UR[0, NE - z, 1] = np.conj(UR[0, z, 1])
+
+        # Zero at Z=NED2+1 (index NED2 in 0-based)
+        for x in range(ND2):
+            UR[x, NED2, 0] = np.complex64(0.0 + 0.0j)
+            UR[x, NED2, 1] = np.complex64(0.0 + 0.0j)
+
+        # ------------------------------------------------------------------
+        # Compute averages A(1..7), E110, Q2, W2, VISC (Fortran DO 800/810)
+        # ------------------------------------------------------------------
+        A1 = 0.0
+        A2 = 0.0
+        A3 = 0.0
+        A4 = 0.0
+        A5 = 0.0
+        A6 = 0.0
+        A7 = 0.0
+        E110 = 0.0
+
+        for x in range(ND2):
+            x1 = (x == 0)
+            ax2 = float(alfa[x]) * float(alfa[x])
+
+            for z in range(NE):
+                U1 = UR[x, z, 0]
+                U3 = UR[x, z, 1]
+
+                u1u1 = float(U1.real) * float(U1.real) + float(U1.imag) * float(U1.imag)
+                u3u3 = float(U3.real) * float(U3.real) + float(U3.imag) * float(U3.imag)
+
+                gz2 = float(gamma[z]) * float(gamma[z])
+                K2f = ax2 + gz2
+                m = 1.0 if x1 else 2.0
+
+                A1 += m * u1u1
+                A2 += m * u3u3
+                A3 += m * u1u1 * ax2
+                A4 += m * u1u1 * gz2
+                A5 += m * u3u3 * ax2
+                A6 += m * u3u3 * gz2
+                A7 += m * (u1u1 + u3u3) * K2f * K2f
+
+                if x1:
+                    E110 += u1u1
+
+        Q2 = A1 + A2
+        W2 = A3 + A4 + A5 + A6
+        visc = np.sqrt((Q2 * Q2) / (float(Re) * W2))
+
+        # ------------------------------------------------------------------
+        # Reshuffle (Fortran DO 1000 block)
+        # ------------------------------------------------------------------
+        for comp in range(2):
+            for z in range(NED2 - 1, -1, -1):
+                for x in range(ND2):
+                    # UR(X,N-NED2+Z,I) = UR(X,Z+NED2,I)
+                    UR[x, N - NED2 + z, comp] = UR[x, z + NED2, comp]
+
+                    # IF(Z.LE.(N-NE)) UR(X,Z+NED2,I) = NOLL
+                    if z <= (N - NE - 1):
+                        UR[x, z + NED2, comp] = np.complex64(0.0 + 0.0j)
+
+        return UR, seed, np.float32(visc), Q2, W2, E110, A1, A3, A4, A5, A6, A7
 
 # ===============================================================
 # ONLY FFT selection (CPU: scipy.fft, GPU: cupyx.scipy.fft)
@@ -535,118 +719,146 @@ def dns_pao_host_init(S: DnsState):
     seed = [int(S.seed_init)]  # mimics ISEED SAVE
     RANVEC = np.zeros(97, dtype=np.float32)
 
-    # "warm-up" 97 calls
-    for _ in range(97):
-        frand(seed)
-
-    # fill RANVEC
-    for i in range(97):
-        RANVEC[i] = frand(seed)
-
-    def random_from_vec(r: np.float32) -> np.float32:
-        idx = int(float(r) * 97.0)
-        if idx < 0:
-            idx = 0
-        if idx > 96:
-            idx = 96
-        v = RANVEC[idx]
-        RANVEC[idx] = r
-        return v
-
     # ------------------------------------------------------------------
     # Generate isotropic random spectrum (Fortran DO 500/510 loops)
     # ------------------------------------------------------------------
-    print("Generate isotropic random spectrum...")
-    for z in range(NE):
-        if z % 1000 == 0:
-            print(f"z={z}/{NE}")
+    if _nb is not None:
+        print("Generate isotropic random spectrum... (Numba)")
+        UR, seed_out, visc_f32, Q2, W2, E110, A1, A3, A4, A5, A6, A7 = _pao_numba_build_ur_and_stats(
+            N=N,
+            NE=NE,
+            K0=np.float32(S.K0),
+            Re=np.float32(S.Re),
+            seed_init=int(S.seed_init),
+            alfa=alfa,
+            gamma=gamma,
+        )
+        seed[0] = int(seed_out)
+        S.visc = np.float32(visc_f32)
+    else:
+        # "warm-up" 97 calls
+        for _ in range(97):
+            frand(seed)
 
-        gz = gamma[z]
-        for x in range(NED2):
-            r = frand(seed)
-            th = np.float32(2.0) * PI * random_from_vec(r)
+        # fill RANVEC
+        for i in range(97):
+            RANVEC[i] = frand(seed)
 
-            ARG = np.complex64(np.cos(th) + 1j * np.sin(th))
+        def random_from_vec(r: np.float32) -> np.float32:
+            idx = int(float(r) * 97.0)
+            if idx < 0:
+                idx = 0
+            if idx > 96:
+                idx = 96
+            v = RANVEC[idx]
+            RANVEC[idx] = r
+            return v
 
-            ax = alfa[x]
-            K2 = np.float32(ax * ax + gz * gz)
-            K = np.float32(np.sqrt(K2)) if K2 > 0.0 else np.float32(0.0)
-
-            if ax == 0.0:
-                # ALFA(X) == 0: purely u1 mode
-                UR[x, z, 1] = np.complex64(0.0 + 0.0j)
-
-                ABSU2 = np.float32(np.exp(- (K / K0) * (K / K0)) / NORM)
-                amp = np.float32(np.sqrt(ABSU2))
-                UR[x, z, 0] = np.complex64(amp) * ARG
-            else:
-                denom = np.float32(1.0) + (gz * gz) / (ax * ax)
-                ABSW2 = np.float32(np.exp(- (K / K0) * (K / K0)) / (denom * NORM))
-                ampw = np.float32(np.sqrt(ABSW2))
-
-                w = np.complex64(ampw) * ARG
-                u = np.complex64(- (gz / ax)) * w  # -GAMMA/ALFA * UR(.,.,2)
-
-                UR[x, z, 1] = w
-                UR[x, z, 0] = u
-
-    # Special zero modes (UR(1,1,1)=0, UR(1,1,2)=0 in 1-based Fortran)
-    UR[0, 0, 0] = np.complex64(0.0 + 0.0j)
-    UR[0, 0, 1] = np.complex64(0.0 + 0.0j)
-
-    # ------------------------------------------------------------------
-    # Hermitian symmetry in Z (Fortran DO 600)
-    # ------------------------------------------------------------------
-    for z in range(1, NED2):
-        UR[0, NE - z, 0] = np.conj(UR[0, z, 0])
-        UR[0, NE - z, 1] = np.conj(UR[0, z, 1])
-
-    # Zero at Z=NED2+1 (index NED2 in 0-based)
-    UR[:, NED2, 0] = 0.0 + 0.0j
-    UR[:, NED2, 1] = 0.0 + 0.0j
-
-    # ------------------------------------------------------------------
-    # Compute averages A(1..7), E110, Q2, W2, VISC (Fortran DO 800/810)
-    # ------------------------------------------------------------------
-    A1 = A2 = A3 = A4 = A5 = A6 = A7 = 0.0
-    E110 = 0.0
-
-    print("Compute averages A(1..7), E110, Q2, W2, VISC...")
-    for x in range(ND2):
-        x1 = (x == 0)
-        ax2 = float(alfa[x]) * float(alfa[x])
-
+        print("Generate isotropic random spectrum...")
         for z in range(NE):
-            U1 = UR[x, z, 0]
-            U3 = UR[x, z, 1]
+            if z % 1000 == 0:
+                print(f"z={z}/{NE}")
 
-            u1u1 = float(np.abs(U1) ** 2)
-            u3u3 = float(np.abs(U3) ** 2)
+            gz = gamma[z]
+            for x in range(NED2):
+                r = frand(seed)
+                th = np.float32(2.0) * PI * random_from_vec(r)
 
-            gz2 = float(gamma[z]) * float(gamma[z])
-            K2 = ax2 + gz2
-            m = 1.0 if x1 else 2.0
+                ARG = np.complex64(np.cos(th) + 1j * np.sin(th))
 
-            A1 += m * u1u1
-            A2 += m * u3u3
-            A3 += m * u1u1 * ax2
-            A4 += m * u1u1 * gz2
-            A5 += m * u3u3 * ax2
-            A6 += m * u3u3 * gz2
-            A7 += m * (u1u1 + u3u3) * K2 * K2
+                ax = alfa[x]
+                K2 = np.float32(ax * ax + gz * gz)
+                K = np.float32(np.sqrt(K2)) if K2 > 0.0 else np.float32(0.0)
 
-            if x1:
-                E110 += u1u1
+                if ax == 0.0:
+                    # ALFA(X) == 0: purely u1 mode
+                    UR[x, z, 1] = np.complex64(0.0 + 0.0j)
 
-    Q2 = A1 + A2
-    W2 = A3 + A4 + A5 + A6
-    visc = math.sqrt(Q2 * Q2 / (float(S.Re) * W2))
+                    ABSU2 = np.float32(np.exp(- (K / K0) * (K / K0)) / NORM)
+                    amp = np.float32(np.sqrt(ABSU2))
+                    UR[x, z, 0] = np.complex64(amp) * ARG
+                else:
+                    denom = np.float32(1.0) + (gz * gz) / (ax * ax)
+                    ABSW2 = np.float32(np.exp(- (K / K0) * (K / K0)) / (denom * NORM))
+                    ampw = np.float32(np.sqrt(ABSW2))
 
-    S.visc = np.float32(visc)
+                    w = np.complex64(ampw) * ARG
+                    u = np.complex64(- (gz / ax)) * w  # -GAMMA/ALFA * UR(.,.,2)
+
+                    UR[x, z, 1] = w
+                    UR[x, z, 0] = u
+
+        # Special zero modes (UR(1,1,1)=0, UR(1,1,2)=0 in 1-based Fortran)
+        UR[0, 0, 0] = np.complex64(0.0 + 0.0j)
+        UR[0, 0, 1] = np.complex64(0.0 + 0.0j)
+
+        # ------------------------------------------------------------------
+        # Hermitian symmetry in Z (Fortran DO 600)
+        # ------------------------------------------------------------------
+        for z in range(1, NED2):
+            UR[0, NE - z, 0] = np.conj(UR[0, z, 0])
+            UR[0, NE - z, 1] = np.conj(UR[0, z, 1])
+
+        # Zero at Z=NED2+1 (index NED2 in 0-based)
+        UR[:, NED2, 0] = 0.0 + 0.0j
+        UR[:, NED2, 1] = 0.0 + 0.0j
+
+        # ------------------------------------------------------------------
+        # Compute averages A(1..7), E110, Q2, W2, VISC (Fortran DO 800/810)
+        # ------------------------------------------------------------------
+        A1 = A2 = A3 = A4 = A5 = A6 = A7 = 0.0
+        E110 = 0.0
+
+        print("Compute averages A(1..7), E110, Q2, W2, VISC...")
+        for x in range(ND2):
+            x1 = (x == 0)
+            ax2 = float(alfa[x]) * float(alfa[x])
+
+            for z in range(NE):
+                U1 = UR[x, z, 0]
+                U3 = UR[x, z, 1]
+
+                u1u1 = float(np.abs(U1) ** 2)
+                u3u3 = float(np.abs(U3) ** 2)
+
+                gz2 = float(gamma[z]) * float(gamma[z])
+                K2 = ax2 + gz2
+                m = 1.0 if x1 else 2.0
+
+                A1 += m * u1u1
+                A2 += m * u3u3
+                A3 += m * u1u1 * ax2
+                A4 += m * u1u1 * gz2
+                A5 += m * u3u3 * ax2
+                A6 += m * u3u3 * gz2
+                A7 += m * (u1u1 + u3u3) * K2 * K2
+
+                if x1:
+                    E110 += u1u1
+
+        Q2 = A1 + A2
+        W2 = A3 + A4 + A5 + A6
+        visc = math.sqrt(Q2 * Q2 / (float(S.Re) * W2))
+
+        S.visc = np.float32(visc)
+
+        # ------------------------------------------------------------------
+        # Reshuffle (Fortran DO 1000 block)
+        # ------------------------------------------------------------------
+        for comp in range(2):
+            for z in range(NED2 - 1, -1, -1):
+                for x in range(ND2):
+                    # UR(X,N-NED2+Z,I) = UR(X,Z+NED2,I)
+                    UR[x, N - NED2 + z, comp] = UR[x, z + NED2, comp]
+
+                    # IF(Z.LE.(N-NE)) UR(X,Z+NED2,I) = NOLL
+                    if z <= (N - NE - 1):
+                        UR[x, z + NED2, comp] = 0.0 + 0.0j
 
     # ------------------------------------------------------------------
     # Extra diagnostics (Fortran WRITE block)
     # ------------------------------------------------------------------
+    visc = float(S.visc)
     EP = visc * W2
     De = 2.0 * visc * visc * A7
     KOL = (visc * visc * visc / EP) ** 0.25
@@ -660,8 +872,8 @@ def dns_pao_host_init(S: DnsState):
     dxKol = float(DXZ) / KOL
     Lux = 2.0 * math.pi / math.sqrt(2.0 * A1 / A3)
     Luz = 2.0 * math.pi / math.sqrt(2.0 * A1 / A4)
-    Lwx = 2.0 * math.pi / math.sqrt(2.0 * A2 / A5)
-    Lwz = 2.0 * math.pi / math.sqrt(2.0 * A2 / A6)
+    Lwx = 2.0 * math.pi / math.sqrt(2.0 * (Q2 - A1) / A5) if A5 != 0.0 else 0.0
+    Lwz = 2.0 * math.pi / math.sqrt(2.0 * (Q2 - A1) / A6) if A6 != 0.0 else 0.0
     Ceps2 = 0.5 * Q2 * De / (EP * EP)
 
     # Print diagnostics exactly like the CUDA/Fortran version
@@ -687,19 +899,6 @@ def dns_pao_host_init(S: DnsState):
     print(f" E1          ={float(E1):12.4f}")
     print(f" E3          ={float(E3):12.4f}")
     print(f" PAO seed    ={seed[0]:12d}")
-
-    # ------------------------------------------------------------------
-    # Reshuffle (Fortran DO 1000 block)
-    # ------------------------------------------------------------------
-    for comp in range(2):
-        for z in range(NED2 - 1, -1, -1):
-            for x in range(ND2):
-                # UR(X,N-NED2+Z,I) = UR(X,Z+NED2,I)
-                UR[x, N - NED2 + z, comp] = UR[x, z + NED2, comp]
-
-                # IF(Z.LE.(N-NE)) UR(X,Z+NED2,I) = NOLL
-                if z <= (N - NE - 1):
-                    UR[x, z + NED2, comp] = 0.0 + 0.0j
 
     # ------------------------------------------------------------------
     # Scatter spectral UR → compact UC(kx,z,comp) buffer (current grid)
