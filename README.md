@@ -36,6 +36,9 @@ Run an cupystorm window that:
 ### Keyboard shortcuts
 Single-key shortcuts (application-wide) for fast control:
 
+- **H**: stop
+- **G**: start
+- **Y**: reset
 - **V**: cycle variable
 - **C**: cycle colormap
 - **N**: cycle grid size
