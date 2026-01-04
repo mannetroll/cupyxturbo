@@ -126,6 +126,8 @@ if _nb is not None:
         # Generate isotropic random spectrum (Fortran DO 500/510 loops)
         # ------------------------------------------------------------------
         for z in range(NE):
+            if z % 1000 == 0:
+                print(f"z={z}/{NE}")
             gz = gamma[z]
             for x in range(NED2):
                 seed, r = _frand_step_numba(seed)
