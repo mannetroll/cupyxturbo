@@ -11,7 +11,8 @@ authors = [
 ]
 
 dependencies = [
-  "numpy>=2.4,<3",
+  "numpy>=2.3.5,<3",
+  "numba>=0.63.1,<1",
   "Pillow>=12,<13",
   "scipy>=1.16.3,<2",
   "PySide6>=6.10.1,<7",
@@ -29,6 +30,7 @@ turbulence = "scipyturbo.turbo_main:main"
 sim = "scipyturbo.turbo_simulator:main"
 fps = "scipyturbo.turbo_simulator_fps:main"
 cufft = "scipyturbo.turbo_simulator_cufft:main"
+numba = "scipyturbo.turbo_simulator_numba:main"
 
 # Package discovery
 [tool.setuptools.packages.find]
