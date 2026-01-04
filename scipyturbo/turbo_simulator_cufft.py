@@ -1302,7 +1302,7 @@ def run_dns(
             dns_step2a(S)
             if (it % 100) == 0 or it == 1 or it == STEPS:
                 next_dt(S)
-                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f} CFLM={float(CFLM):.6f}")
+                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f} CFLM={float(compute_cflm(S)):.6f}")
             S.t += dt_old
 
         S.sync()
