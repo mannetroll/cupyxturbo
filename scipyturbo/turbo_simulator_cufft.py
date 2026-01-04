@@ -1076,7 +1076,6 @@ def compute_cflm(S: DnsState):
 
     if S.backend == "gpu" and _cflm_max_abs_sum is not None:
         CFLM = _cflm_max_abs_sum(u, w) * xp.float32(S.inv_dx)  # GPU scalar
-        print(f" CFLM = {float(CFLM):.6f}")
         return CFLM
 
     # CPU (or fallback): keep current code path
@@ -1303,7 +1302,7 @@ def run_dns(
             dns_step2a(S)
             if (it % 100) == 0 or it == 1 or it == STEPS:
                 next_dt(S)
-                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f}")
+                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f} CFLM={float(CFLM):.6f}")
             S.t += dt_old
 
         S.sync()
