@@ -773,6 +773,8 @@ def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
         else:
             ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
 
+    ur01 *= xp.float32(S.NZ_full * S.NX_full)
+
     S.ur_full[0:2, :, :] = xp.asarray(ur01, dtype=xp.float32)
     S.ur_full[2, :, :] = xp.float32(0.0)
 
@@ -1281,14 +1283,14 @@ def run_dns(
         if S.backend == "gpu":
             CFLM0 = float(CFLM)  # one sync here at init (fine)
         else:
-            CFLM0 = CFLM
+            CFLM0 = float(CFLM)
 
         S.dt = S.cflnum / (CFLM0 * math.pi)
         S.cn = 1.0
         S.cnm1 = 0.0
         S.t = 0.0
 
-        print(f" [NEXTDT INIT] CFLM={CFLM:11.4f} DT={S.dt:11.7f} CN={S.cn:11.7f}")
+        print(f" [NEXTDT INIT] CFLM={CFLM0:11.4f} DT={S.dt:11.7f} CN={S.cn:11.7f}")
         print(f" Initial DT={S.dt:11.7f} CN={S.cn:11.7f}")
 
         S.sync()
