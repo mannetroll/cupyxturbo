@@ -63,7 +63,7 @@ From the project root:
 
     $ uv sync
     $ uv run -- turbulence
-    $ uv run -- fps
+    $ uv run -- sim
 
 ## The DNS with SciPy (1024 x 1024)
 
@@ -104,7 +104,7 @@ On a CUDA machine (e.g. RTX 3090):
 
        $ uv sync --extra cuda
        $ uv run -- turbulence
-       $ uv run -- fps
+       $ uv run -- sim
 
 3. Verify that CuPy sees the GPU:
 
@@ -182,4 +182,4 @@ $ uv run --python 3.13 --with mannetroll-cupyxturbo[cuda]==0.1.3 -- turbulence
 
 ## License
 
-Copyright © Mannetroll
+Copyright (c) 2026 mannetroll
