@@ -802,6 +802,7 @@ def dns_pao_host_init(S: DnsState):
     #   UC: (NK, NE, 3) on host, but DnsState.uc is (NZ, NK, 3) in xp
     # ------------------------------------------------------------------
     NK = S.NK
+    print(f" np.zeros(({NK}, {NE}, 3), dtype=np.complex64)")
     UC_host = np.zeros((NK, NE, 3), dtype=np.complex64)  # only comp 0,1 used
 
     for z in range(NE):
