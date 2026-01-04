@@ -335,7 +335,7 @@ class MainWindow(QMainWindow):
         self.sim = sim
         self.current_cmap_name = DEFAULT_CMAP_NAME
 
-        self.sig: float = 0.1
+        self.sig: float = 20.0
         self.mu: float = 0.0
 
         # --- central image label ---
@@ -974,7 +974,7 @@ class MainWindow(QMainWindow):
         dt = float(self.sim.state.dt)
 
         txt = (
-            f"FPS: {fps_str} | σ: {sig_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
+            f"   FPS: {fps_str} | σ: {sig_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
             f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:6g} | {_dt.datetime.now().strftime("%Y-%m-%d %H:%M")}"
         )
         self.status.showMessage(txt)
