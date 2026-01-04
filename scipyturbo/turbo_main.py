@@ -354,21 +354,21 @@ class MainWindow(QMainWindow):
         # Start button
         self.start_button = QPushButton()
         self.start_button.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
-        self.start_button.setToolTip("Start simulation")
+        self.start_button.setToolTip("G: Start simulation")
         self.start_button.setFixedSize(28, 28)
         self.start_button.setIconSize(QSize(14, 14))
 
         # Stop button
         self.stop_button = QPushButton()
         self.stop_button.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_MediaStop))
-        self.stop_button.setToolTip("Stop simulation")
+        self.stop_button.setToolTip("S: Stop simulation")
         self.stop_button.setFixedSize(28, 28)
         self.stop_button.setIconSize(QSize(14, 14))
 
         # Reset button
         self.reset_button = QPushButton()
         self.reset_button.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
-        self.reset_button.setToolTip("Reset simulation")
+        self.reset_button.setToolTip("Y: Reset simulation")
         self.reset_button.setFixedSize(28, 28)
         self.reset_button.setIconSize(QSize(14, 14))
 
@@ -1039,6 +1039,16 @@ class MainWindow(QMainWindow):
         # Reset Yank (Y)
         if key == Qt.Key.Key_Y:
             self.on_reset_clicked()
+            return
+
+        # Stop/Halt (H)
+        if key == Qt.Key.Key_H:
+            self.on_stop_clicked()
+            return
+
+        # Start/Go (G)
+        if key == Qt.Key.Key_G:
+            self.on_start_clicked()
             return
 
         super().keyPressEvent(event)
