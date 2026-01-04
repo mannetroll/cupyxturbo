@@ -1076,7 +1076,7 @@ def compute_cflm(S: DnsState):
 
     if S.backend == "gpu" and _cflm_max_abs_sum is not None:
         CFLM = _cflm_max_abs_sum(u, w) * xp.float32(S.inv_dx)  # GPU scalar
-        print(f"[CFLM] GPU max(|u|+|w|) = {float(CFLM) / S.inv_dx:.6f}, CFLM = {float(CFLM):.6f}")
+        print(f" CFLM = {float(CFLM):.6f}")
         return CFLM
 
     # CPU (or fallback): keep current code path
