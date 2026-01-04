@@ -335,6 +335,9 @@ class MainWindow(QMainWindow):
         self.sim = sim
         self.current_cmap_name = DEFAULT_CMAP_NAME
 
+        self.sig: float = 0.1
+        self.mu: float = 0.0
+
         # --- central image label ---
         self.image_label = QLabel()
         # allow shrinking when grid size becomes smaller
@@ -882,12 +885,11 @@ class MainWindow(QMainWindow):
             mspf = None
             if elapsed > 0 and steps > 0:
                 fps = steps / elapsed
-                mspf = 1000.0 * (elapsed / steps)
 
             self._update_status(
                 self.sim.get_time(),
                 self.sim.get_iteration(),
-                fps, mspf
+                fps, self.sig
             )
 
             self._status_update_counter = 0
@@ -934,14 +936,12 @@ class MainWindow(QMainWindow):
         # Reduce display flicker by using a stable (EMA) mean/std
         # normalization instead of frame-wise min/max stretching.
         pix_f = pixels.astype(np.float32, copy=False)
-        mu = float(pix_f.mean())
-        sig = float(pix_f.std())
-        if sig < 1.0e-6:
-            sig = 1.0
+        self.mu = float(pix_f.mean())
+        self.sig = float(pix_f.std())
 
         k = float(DISPLAY_NORM_K_STD)
-        lo = mu - k * sig
-        hi = mu + k * sig
+        lo = self.mu - k * self.sig
+        hi = self.mu + k * self.sig
         inv = 255.0 / (hi - lo) if (hi - lo) != 0.0 else 0.0
         pixels = ((pix_f - lo) * inv).round().clip(0.0, 255.0).astype(np.uint8)
 
@@ -962,9 +962,9 @@ class MainWindow(QMainWindow):
         pix = QPixmap.fromImage(qimg, Qt.ImageConversionFlag.NoFormatConversion)
         self.image_label.setPixmap(pix)
 
-    def _update_status(self, t: float, it: int, fps: Optional[float], mspf: Optional[float]) -> None:
+    def _update_status(self, t: float, it: int, fps: Optional[float], sig: Optional[float]) -> None:
         fps_str = f"{fps:5.2f}" if fps is not None else " N/A"
-        mspf_str = f"{mspf:6.1f}" if mspf is not None else " N/A"
+        sig_str = f"{sig:3.1f}" if sig is not None else " N/A"
 
         # DPP = Display Pixel Percentage
         dpp = int(100 / self._display_scale())
@@ -974,7 +974,7 @@ class MainWindow(QMainWindow):
         dt = float(self.sim.state.dt)
 
         txt = (
-            f"FPS: {fps_str} | MSPF: {mspf_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
+            f"FPS: {fps_str} | σ: {sig_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
             f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:6g} | {_dt.datetime.now().strftime("%Y-%m-%d %H:%M")}"
         )
         self.status.showMessage(txt)
