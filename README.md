@@ -119,7 +119,7 @@ Or let the backend auto-detect:
        $ uv run python -m scipyturbo.turbo_simulator 256 10000 10 1001 0.75 auto
 
 
-## The DNS with CuPy (8192 x 8192)
+## The DNS with CuPy (8192 x 8192) Dedicated GPU memory 18/24 GB
 
 ![CuPy](https://raw.githubusercontent.com/mannetroll/cupyxturbo/main/window8192.png)
 
@@ -177,11 +177,9 @@ $ uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.3 -- turbulence
 ## one-liner GPU/CuPy
 
 ```
-$ uv run --python 3.13 --with "mannetroll-cupyxturbo[cuda]==0.1.3" -- turbulence
+$ uv run --python 3.13 --with mannetroll-cupyxturbo[cuda]==0.1.3 -- turbulence
 ```
 
 ## License
 
 Copyright © Mannetroll
-
-See the project repository for license details.
