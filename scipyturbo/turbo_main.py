@@ -1036,6 +1036,11 @@ class MainWindow(QMainWindow):
             self.update_combo.setCurrentIndex((idx + 1) % count)
             return
 
+        # Reset Yank (Y)
+        if key == Qt.Key.Key_Y:
+            self.on_reset_clicked()
+            return
+
         super().keyPressEvent(event)
 
 
