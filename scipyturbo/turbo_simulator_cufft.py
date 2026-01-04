@@ -1086,9 +1086,7 @@ def compute_cflm(S: DnsState):
     xp.abs(w, out=absw)
     xp.add(tmp, absw, out=tmp)
     CFLM = xp.max(tmp) * S.inv_dx
-
     return float(CFLM) if S.backend == "cpu" else CFLM
-
 
 def next_dt(S: DnsState) -> None:
     PI = math.pi
