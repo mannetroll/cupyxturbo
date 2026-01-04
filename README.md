@@ -182,4 +182,4 @@ $ uv run --python 3.13 --with mannetroll-cupyxturbo[cuda]==0.1.3 -- turbulence
 
 ## License
 
-Copyright (c) 2026 mannetroll
+Copyright © 2026 mannetroll
