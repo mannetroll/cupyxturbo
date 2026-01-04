@@ -41,6 +41,17 @@ try:
     print(" Checking CuPy...")
     import cupy as _cp
     _cp.show_config()
+    _cflm_max_abs_sum = None
+    if _cp is not None:
+        _cflm_max_abs_sum = _cp.ReductionKernel(
+            in_params="float32 u, float32 w",
+            out_params="float32 out",
+            map_expr="fabsf(u) + fabsf(w)",
+            reduce_expr="max(a, b)",
+            post_map_expr="out = a",
+            identity="0.0f",
+            name="cflm_max_abs_sum",
+        )
 except Exception:  # CuPy is optional
     _cp = None
     print(" CuPy not installed")
@@ -357,6 +368,8 @@ def create_dns_state(
 
     # Cache FFT module for the chosen backend (avoid per-call selection)
     state.fft = _fft_mod_for_state(state)
+    if state.backend == "cpu" and state.fft is None:
+        raise RuntimeError("scipy.fft import failed; CPU backend requires SciPy.")
 
     # Precompute inverse grid spacing (dx==dz==2*pi/N)
     state.inv_dx = float(state.Nbase) / (2.0 * math.pi)
@@ -747,8 +760,6 @@ def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
     xp = S.xp
     UC = S.uc_full
     fft = S.fft
-    if fft is None:
-        raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
 
     UC01 = UC[0:2, :, :]
 
@@ -761,6 +772,9 @@ def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
                 ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
         else:
             ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
+
+    # Match previous STEP2A behavior exactly: scale BEFORE float32 cast/assign.
+    ur01 *= (S.NZ_full * S.NX_full)
 
     S.ur_full[0:2, :, :] = xp.asarray(ur01, dtype=xp.float32)
     S.ur_full[2, :, :] = xp.float32(0.0)
@@ -779,8 +793,6 @@ def vfft_full_forward_ur_full_to_uc_full(S: DnsState) -> None:
     # S.ur_full is already float32
     UR = S.ur_full
     fft = S.fft
-    if fft is None:
-        raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
 
     if S.backend == "cpu":
         # overwrite_x is safe here (UR_full is overwritten later by STEP2A anyway)
@@ -1022,26 +1034,8 @@ def dns_step2a(S: DnsState) -> None:
         UC[0:2, z_top_start:z_top_end, :k_max] = UC[0:2, z_mid_start:z_mid_end, :k_max]
         UC[0:2, z_mid_start:z_mid_end, :k_max] = xp.complex64(0.0 + 0.0j)
 
-    fft = S.fft
-    if fft is None:
-        raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
-
-    UC01 = UC[0:2, :, :]
-
-    if S.backend == "cpu":
-        ur01 = fft.irfft2(UC01, s=(NZ_full, NX_full), axes=(1, 2), overwrite_x=True)
-    else:
-        plan = S.fft_plan_irfft2_uc01
-        if plan is not None:
-            with plan:
-                ur01 = fft.irfft2(UC01, s=(NZ_full, NX_full), axes=(1, 2))
-        else:
-            ur01 = fft.irfft2(UC01, s=(NZ_full, NX_full), axes=(1, 2))
-
-    ur01 *= xp.float32(NZ_full * NX_full)
-
-    S.ur_full[0:2, :, :] = ur01
-    S.ur_full[2, :, :] = xp.float32(0.0)
+    # Inverse FFT UC_full → UR_full
+    vfft_full_inverse_uc_full_to_ur_full(S)
 
     off_x = (NX_full - NX) // 2
     off_z = (NZ_full - NZ) // 2
@@ -1057,26 +1051,24 @@ def dns_step2a(S: DnsState) -> None:
 
 def compute_cflm(S: DnsState):
     xp = S.xp
-
     NX3D2 = S.NX_full
     NZ3D2 = S.NZ_full
 
     u = S.ur_full[0, :NZ3D2, :NX3D2]
     w = S.ur_full[1, :NZ3D2, :NX3D2]
 
+    if S.backend == "gpu" and _cflm_max_abs_sum is not None:
+        CFLM = _cflm_max_abs_sum(u, w) * xp.float32(S.inv_dx)  # GPU scalar
+        return CFLM
+
+    # CPU (or fallback): keep current code path
     tmp = S.cfl_tmp[:NZ3D2, :NX3D2]
     absw = S.cfl_absw[:NZ3D2, :NX3D2]
-
     xp.abs(u, out=tmp)
     xp.abs(w, out=absw)
     xp.add(tmp, absw, out=tmp)
-
     CFLM = xp.max(tmp) * S.inv_dx
-    if S.backend == "cpu":
-        return float(CFLM)
-
-    return CFLM
-
+    return float(CFLM) if S.backend == "cpu" else CFLM
 
 def next_dt(S: DnsState) -> None:
     PI = math.pi
@@ -1194,8 +1186,6 @@ def _spectral_band_to_phys_full_grid(S: DnsState, band) -> any:
         uc_tmp[z_mid, :NX_half] = xp.complex64(0.0 + 0.0j)
 
     fft = S.fft
-    if fft is None:
-        raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
 
     if S.backend == "cpu":
         phys = fft.irfft2(uc_tmp, s=(NZ_full, NX_full), axes=(0, 1), overwrite_x=True)
@@ -1272,14 +1262,14 @@ def run_dns(
         if S.backend == "gpu":
             CFLM0 = float(CFLM)  # one sync here at init (fine)
         else:
-            CFLM0 = CFLM
+            CFLM0 = float(CFLM)
 
         S.dt = S.cflnum / (CFLM0 * math.pi)
         S.cn = 1.0
         S.cnm1 = 0.0
         S.t = 0.0
 
-        print(f" [NEXTDT INIT] CFLM={CFLM:11.4f} DT={S.dt:11.7f} CN={S.cn:11.7f}")
+        print(f" [NEXTDT INIT] CFLM={CFLM0:11.4f} DT={S.dt:11.7f} CN={S.cn:11.7f}")
         print(f" Initial DT={S.dt:11.7f} CN={S.cn:11.7f}")
 
         S.sync()
@@ -1287,18 +1277,14 @@ def run_dns(
 
         for it in range(1, STEPS + 1):
             S.it = it
-
             dt_old = S.dt
-
             dns_step2b(S)
             dns_step3(S)
             dns_step2a(S)
-
-            next_dt(S)
-            S.t += dt_old
-
             if (it % 100) == 0 or it == 1 or it == STEPS:
-                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f}")
+                next_dt(S)
+                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f} CFLM={float(compute_cflm(S)):.6f}")
+            S.t += dt_old
 
         S.sync()
         t1 = time.perf_counter()
