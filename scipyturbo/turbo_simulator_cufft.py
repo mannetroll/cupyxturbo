@@ -41,6 +41,17 @@ try:
     print(" Checking CuPy...")
     import cupy as _cp
     _cp.show_config()
+    _cflm_max_abs_sum = None
+    if _cp is not None:
+        _cflm_max_abs_sum = _cp.ReductionKernel(
+            in_params="float32 u, float32 w",
+            out_params="float32 out",
+            map_expr="fabsf(u) + fabsf(w)",
+            reduce_expr="max(a, b)",
+            post_map_expr="out = a",
+            identity="0.0f",
+            name="cflm_max_abs_sum",
+        )
 except Exception:  # CuPy is optional
     _cp = None
     print(" CuPy not installed")
@@ -1057,25 +1068,26 @@ def dns_step2a(S: DnsState) -> None:
 
 def compute_cflm(S: DnsState):
     xp = S.xp
-
     NX3D2 = S.NX_full
     NZ3D2 = S.NZ_full
 
     u = S.ur_full[0, :NZ3D2, :NX3D2]
     w = S.ur_full[1, :NZ3D2, :NX3D2]
 
+    if S.backend == "gpu" and _cflm_max_abs_sum is not None:
+        CFLM = _cflm_max_abs_sum(u, w) * xp.float32(S.inv_dx)  # GPU scalar
+        print(f"[CFLM] GPU max(|u|+|w|) = {float(CFLM) / S.inv_dx:.6f}, CFLM = {float(CFLM):.6f}")
+        return CFLM
+
+    # CPU (or fallback): keep current code path
     tmp = S.cfl_tmp[:NZ3D2, :NX3D2]
     absw = S.cfl_absw[:NZ3D2, :NX3D2]
-
     xp.abs(u, out=tmp)
     xp.abs(w, out=absw)
     xp.add(tmp, absw, out=tmp)
-
     CFLM = xp.max(tmp) * S.inv_dx
-    if S.backend == "cpu":
-        return float(CFLM)
 
-    return CFLM
+    return float(CFLM) if S.backend == "cpu" else CFLM
 
 
 def next_dt(S: DnsState) -> None:
