@@ -368,6 +368,8 @@ def create_dns_state(
 
     # Cache FFT module for the chosen backend (avoid per-call selection)
     state.fft = _fft_mod_for_state(state)
+    if state.backend == "cpu" and state.fft is None:
+        raise RuntimeError("scipy.fft import failed; CPU backend requires SciPy.")
 
     # Precompute inverse grid spacing (dx==dz==2*pi/N)
     state.inv_dx = float(state.Nbase) / (2.0 * math.pi)
@@ -758,8 +760,6 @@ def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
     xp = S.xp
     UC = S.uc_full
     fft = S.fft
-    if fft is None:
-        raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
 
     UC01 = UC[0:2, :, :]
 
@@ -773,7 +773,8 @@ def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
         else:
             ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
 
-    ur01 *= xp.float32(S.NZ_full * S.NX_full)
+    # Match previous STEP2A behavior exactly: scale BEFORE float32 cast/assign.
+    ur01 *= (S.NZ_full * S.NX_full)
 
     S.ur_full[0:2, :, :] = xp.asarray(ur01, dtype=xp.float32)
     S.ur_full[2, :, :] = xp.float32(0.0)
@@ -792,8 +793,6 @@ def vfft_full_forward_ur_full_to_uc_full(S: DnsState) -> None:
     # S.ur_full is already float32
     UR = S.ur_full
     fft = S.fft
-    if fft is None:
-        raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
 
     if S.backend == "cpu":
         # overwrite_x is safe here (UR_full is overwritten later by STEP2A anyway)
@@ -1035,26 +1034,8 @@ def dns_step2a(S: DnsState) -> None:
         UC[0:2, z_top_start:z_top_end, :k_max] = UC[0:2, z_mid_start:z_mid_end, :k_max]
         UC[0:2, z_mid_start:z_mid_end, :k_max] = xp.complex64(0.0 + 0.0j)
 
-    fft = S.fft
-    if fft is None:
-        raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
-
-    UC01 = UC[0:2, :, :]
-
-    if S.backend == "cpu":
-        ur01 = fft.irfft2(UC01, s=(NZ_full, NX_full), axes=(1, 2), overwrite_x=True)
-    else:
-        plan = S.fft_plan_irfft2_uc01
-        if plan is not None:
-            with plan:
-                ur01 = fft.irfft2(UC01, s=(NZ_full, NX_full), axes=(1, 2))
-        else:
-            ur01 = fft.irfft2(UC01, s=(NZ_full, NX_full), axes=(1, 2))
-
-    ur01 *= xp.float32(NZ_full * NX_full)
-
-    S.ur_full[0:2, :, :] = ur01
-    S.ur_full[2, :, :] = xp.float32(0.0)
+    # Inverse FFT UC_full → UR_full
+    vfft_full_inverse_uc_full_to_ur_full(S)
 
     off_x = (NX_full - NX) // 2
     off_z = (NZ_full - NZ) // 2
@@ -1205,8 +1186,6 @@ def _spectral_band_to_phys_full_grid(S: DnsState, band) -> any:
         uc_tmp[z_mid, :NX_half] = xp.complex64(0.0 + 0.0j)
 
     fft = S.fft
-    if fft is None:
-        raise RuntimeError("scipy.fft is not available on CPU (import scipy.fft failed).")
 
     if S.backend == "cpu":
         phys = fft.irfft2(uc_tmp, s=(NZ_full, NX_full), axes=(0, 1), overwrite_x=True)
