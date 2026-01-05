@@ -1,5 +1,5 @@
 """
-turbo_simulator.py — 2D Homogeneous Turbulence DNS (SciPy / CuPy port)
+turbo_simulator_cufft.py — 2D Homogeneous Turbulence DNS (SciPy / CuPy port)
 
 This is a structural port of dns_all.cu to Python.
 
