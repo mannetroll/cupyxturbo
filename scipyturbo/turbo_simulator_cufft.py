@@ -871,9 +871,10 @@ def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
     else:
         plan = S.fft_plan_irfft2_uc01
         if plan is not None:
-            ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2), plan=plan, overwrite_x=True)
+            with plan:
+                ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
         else:
-            ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True)
+            ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
 
     # Match previous STEP2A behavior exactly: scale BEFORE float32 cast/assign.
     ur01 *= (S.NZ_full * S.NX_full)
@@ -902,7 +903,8 @@ def vfft_full_forward_ur_full_to_uc_full(S: DnsState) -> None:
     else:
         plan = S.fft_plan_rfft2_ur_full
         if plan is not None:
-            UC = fft.rfft2(UR, s=(S.NZ_full, S.NX_full), axes=(1, 2), plan=plan, overwrite_x=True)
+            with plan:
+                UC = fft.rfft2(UR, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True)
         else:
             UC = fft.rfft2(UR, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True)
 
