@@ -966,6 +966,8 @@ def dns_calcom_from_uc_full(S: DnsState) -> None:
 # ---------------------------------------------------------------------------
 # STEP2B — build uiuj and forward FFT (dnsCudaStep2B)
 # ---------------------------------------------------------------------------
+_STEP2B_MUL3_KERNEL = None  # created lazily on first GPU call
+
 def dns_step2b(S: DnsState) -> None:
     """
     Python/CuPy port of dnsCudaStep2B(DnsDeviceState *S).
@@ -991,10 +993,22 @@ def dns_step2b(S: DnsState) -> None:
     u = UR[0]   # (NZ_full, NX_full)
     w = UR[1]   # (NZ_full, NX_full)
 
-    # Use in-place multiplies to avoid temporaries
-    xp.multiply(u, w, out=UR[2])  # u * w
-    xp.multiply(u, u, out=UR[0])  # u^2
-    xp.multiply(w, w, out=UR[1])  # w^2
+    # Use a single elementwise GPU kernel to write all three products in one pass
+    if S.backend == "gpu":
+        global _STEP2B_MUL3_KERNEL
+        if _STEP2B_MUL3_KERNEL is None:
+            _STEP2B_MUL3_KERNEL = xp.ElementwiseKernel(
+                "T u, T w",
+                "T uw, T uu, T ww",
+                "uw = u * w; uu = u * u; ww = w * w;",
+                "turbo_step2b_mul3",
+            )
+        _STEP2B_MUL3_KERNEL(u, w, UR[2], UR[0], UR[1])
+    else:
+        # Use in-place multiplies to avoid temporaries
+        xp.multiply(u, w, out=UR[2])  # u * w
+        xp.multiply(u, u, out=UR[0])  # u^2
+        xp.multiply(w, w, out=UR[1])  # w^2
 
     vfft_full_forward_ur_full_to_uc_full(S)
 
