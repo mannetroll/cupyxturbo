@@ -935,6 +935,9 @@ class MainWindow(QMainWindow):
         pix_f = pixels.astype(np.float32, copy=False)
         self.mu = float(pix_f.mean())
         self.sig = float(pix_f.std())
+        if self.sig < 1.0:
+            self.on_stop_clicked()
+            return
 
         k = float(DISPLAY_NORM_K_STD)
         lo = self.mu - k * self.sig
