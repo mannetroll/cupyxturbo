@@ -1028,12 +1028,12 @@ def dns_step2b(S: DnsState) -> None:
 # ---------------------------------------------------------------------------
 # STEP3 — vorticity update using om2 & fnm1
 # ---------------------------------------------------------------------------
-def dns_step3(S: DnsState) -> None:
+def dns_step3(S: DnsState, fuse: bool = True) -> None:
     xp = S.xp
     global _STEP3_UPDATE_KERNEL, _STEP3_BUILD_UC_KERNEL
     # Fast GPU path: fuse the heavy STEP3 arithmetic into a couple of custom kernels.
     # This avoids a large number of small elementwise launches (dominant in Scalene).
-    if S.backend == "gpu" and _cp is not None and False:
+    if S.backend == "gpu" and _cp is not None and fuse:
 
         # Compile once per process
         if _STEP3_UPDATE_KERNEL is None:
@@ -1494,6 +1494,32 @@ def dns_stream_func(S: DnsState) -> None:
     phys = _spectral_band_to_phys_full_grid(S, phi_hat)
     S.ur_full[2, :, :] = phys
 
+import cupy as cp
+
+def _dbg_step3_compare(S):
+    # clone state arrays
+    om2_a = S.om2.copy()
+    fnm1_a = S.fnm1.copy()
+    uc_a = S.uc_full.copy()
+
+    om2_b = S.om2.copy()
+    fnm1_b = S.fnm1.copy()
+    uc_b = S.uc_full.copy()
+
+    # run old step3 on A
+    S.om2 = om2_a; S.fnm1 = fnm1_a; S.uc_full = uc_a
+    dns_step3(S, False)   # <-- cpu impl
+
+    # run fused step3 on B
+    S.om2 = om2_b; S.fnm1 = fnm1_b; S.uc_full = uc_b
+    dns_step3(S, True)    # <-- your kernel path only
+
+    def maxabs(x): return float(cp.max(cp.abs(x)))
+
+    print("om2  max|diff|:", maxabs(om2_a - om2_b))
+    print("fnm1 max|diff|:", maxabs(fnm1_a - fnm1_b))
+    print("uc0  max|diff|:", maxabs(uc_a[0] - uc_b[0]))
+    print("uc1  max|diff|:", maxabs(uc_a[1] - uc_b[1]))
 
 # ---------------------------------------------------------------------------
 # Main driver (Python version of main in dns_all.cu)
@@ -1554,12 +1580,13 @@ def run_dns(
             S.it = it
             dt_old = S.dt
             dns_step2b(S)
-            dns_step3(S)
-            dns_step2a(S)
-            if (it % 100) == 0 or it == 1 or it == STEPS:
-                next_dt(S)
-                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f} CFLM={float(compute_cflm(S)):.6f}")
-            S.t += dt_old
+            _dbg_step3_compare(S)
+            #dns_step3(S)
+            #dns_step2a(S)
+            #if (it % 100) == 0 or it == 1 or it == STEPS:
+            #    next_dt(S)
+            #    print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f} CFLM={float(compute_cflm(S)):.6f}")
+            #S.t += dt_old
 
         S.sync()
         t1 = time.perf_counter()
