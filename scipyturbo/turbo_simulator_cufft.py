@@ -871,8 +871,7 @@ def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
     else:
         plan = S.fft_plan_irfft2_uc01
         if plan is not None:
-            with plan:
-                ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
+            ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2), plan=plan)
         else:
             ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
 
