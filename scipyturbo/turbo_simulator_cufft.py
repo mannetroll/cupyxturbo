@@ -1,5 +1,5 @@
 """
-turbo_simulator_cufft.py — 2D Homogeneous Turbulence DNS (SciPy / CuPy port)
+turbo_simulator.py — 2D Homogeneous Turbulence DNS (SciPy / CuPy port)
 
 This is a structural port of dns_all.cu to Python.
 
@@ -967,6 +967,9 @@ def dns_calcom_from_uc_full(S: DnsState) -> None:
 # STEP2B — build uiuj and forward FFT (dnsCudaStep2B)
 # ---------------------------------------------------------------------------
 _STEP2B_MUL3_KERNEL = None  # created lazily on first GPU call
+_STEP3_UPDATE_KERNEL = None  # created lazily on first GPU call
+_STEP3_BUILD_UC_KERNEL = None  # created lazily on first GPU call
+
 
 def dns_step2b(S: DnsState) -> None:
     """
@@ -1027,6 +1030,161 @@ def dns_step2b(S: DnsState) -> None:
 # ---------------------------------------------------------------------------
 def dns_step3(S: DnsState) -> None:
     xp = S.xp
+    global _STEP3_UPDATE_KERNEL, _STEP3_BUILD_UC_KERNEL
+    # Fast GPU path: fuse the heavy STEP3 arithmetic into a couple of custom kernels.
+    # This avoids a large number of small elementwise launches (dominant in Scalene).
+    if S.backend == "gpu" and _cp is not None:
+
+        # Compile once per process
+        if _STEP3_UPDATE_KERNEL is None:
+            _STEP3_UPDATE_KERNEL = _cp.RawKernel(r'''
+            #include <cupy/complex.cuh>
+            extern "C" __global__
+            void turbo_step3_update(
+                const complex<float>* uc0, const complex<float>* uc1, const complex<float>* uc2,
+                const int* z_spec,
+                const float* GA, const float* G2mA2, const float* K2,
+                complex<float>* om2, complex<float>* fnm1,
+                int NK_full, int NX_half, int NZ,
+                float divxz, float visc, float dt, float cnm1
+            ) {
+                int idx = (int)(blockIdx.x * blockDim.x + threadIdx.x);
+                int n = NZ * NX_half;
+                if (idx >= n) return;
+
+                int z = idx / NX_half;
+                int k = idx - z * NX_half;
+
+                int zsrc = z_spec[z];
+
+                complex<float> u0 = uc0[zsrc * NK_full + k];
+                complex<float> u1 = uc1[zsrc * NK_full + k];
+                complex<float> u2v = uc2[zsrc * NK_full + k];
+
+                float ga = GA[idx];
+                float g2ma2 = G2mA2[idx];
+
+                complex<float> fn = (u0 - u1) * ga + u2v * g2ma2;
+                fn *= divxz;
+
+                float arg = K2[idx] * (0.5f * visc * dt);
+                float den = 1.0f + arg;
+                float invden = 1.0f / den;
+
+                float c2 = 0.5f * dt * (2.0f + cnm1);
+                float c3 = -0.5f * dt * cnm1;
+
+                complex<float> om = om2[idx];
+                complex<float> fprev = fnm1[idx];
+
+                complex<float> num = om - om * arg + fn * c2 + fprev * c3;
+
+                om2[idx] = num * invden;
+                fnm1[idx] = fn;
+            }
+            ''', "turbo_step3_update")
+
+        if _STEP3_BUILD_UC_KERNEL is None:
+            _STEP3_BUILD_UC_KERNEL = _cp.RawKernel(r'''
+            #include <cupy/complex.cuh>
+            extern "C" __global__
+            void turbo_step3_build_uc01(
+                const complex<float>* om2,
+                const float* invK2_sub,
+                const float* gamma,
+                const float* alfa,
+                const float* inv_gamma0,
+                complex<float>* out1,
+                complex<float>* out2,
+                int NX_half, int NZ
+            ) {
+                int idx = (int)(blockIdx.x * blockDim.x + threadIdx.x);
+                int n = NZ * NX_half;
+                if (idx >= n) return;
+
+                int z = idx / NX_half;
+                int k = idx - z * NX_half;
+
+                complex<float> om = om2[idx];
+
+                complex<float> o1(0.0f, 0.0f);
+                complex<float> o2(0.0f, 0.0f);
+
+                if (k == 0) {
+                    float invg = inv_gamma0[z];
+                    // (-i) * (a + i b) = b - i a
+                    o1 = complex<float>(om.imag(), -om.real()) * invg;
+                    o2 = complex<float>(0.0f, 0.0f);
+                } else {
+                    float invk2 = invK2_sub[z * (NX_half - 1) + (k - 1)];
+                    float gz = gamma[z];
+                    float ax = alfa[k];
+
+                    // (-i) * om
+                    complex<float> m1(om.imag(), -om.real());
+                    // ( i) * om
+                    complex<float> m2(-om.imag(), om.real());
+
+                    o1 = m1 * (invk2 * gz);
+                    o2 = m2 * (invk2 * ax);
+                }
+
+                out1[idx] = o1;
+                out2[idx] = o2;
+            }
+            ''', "turbo_step3_build_uc01")
+
+        # Geometry and constants
+        Nbase = int(S.Nbase)
+        NX_half = Nbase // 2
+        NZ = Nbase
+
+        uc_full = S.uc_full
+        NK_full = int(S.NK_full)
+
+        threads = 256
+        n = NZ * NX_half
+        blocks = (n + threads - 1) // threads
+
+        # UPDATE: compute FN, update om2, update fnm1
+        _STEP3_UPDATE_KERNEL(
+            (blocks,),
+            (threads,),
+            (
+                uc_full[0], uc_full[1], uc_full[2],
+                S.step3_z_spec,
+                S.step3_GA, S.step3_G2mA2, S.step3_K2,
+                S.om2, S.fnm1,
+                NK_full, NX_half, NZ,
+                float(S.step3_divxz),
+                float(S.visc),
+                float(S.dt),
+                float(S.cnm1),
+            ),
+        )
+
+        # BUILD: out1/out2 (scratch1/2) from updated om2
+        _STEP3_BUILD_UC_KERNEL(
+            (blocks,),
+            (threads,),
+            (
+                S.om2,
+                S.step3_invK2_sub,
+                S.gamma,
+                S.alfa,
+                S.step3_inv_gamma0,
+                S.scratch1,
+                S.scratch2,
+                NX_half, NZ,
+            ),
+        )
+
+        # Scatter into uc_full low-k band (strided in NK_full, keep the simple slice assign)
+        uc_full[0, :NZ, :NX_half] = S.scratch1
+        uc_full[1, :NZ, :NX_half] = S.scratch2
+
+        S.cnm1 = float(S.cn)
+        return
 
     om2 = S.om2
     fnm1 = S.fnm1
