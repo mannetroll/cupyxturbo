@@ -38,9 +38,12 @@ from typing import Literal
 import numpy as _np
 
 try:
-    print(" Checking CuPy...")
     import cupy as _cp
-    _cp.show_config()
+    #_cp.show_config()
+    dev = _cp.cuda.Device()
+    props = _cp.cuda.runtime.getDeviceProperties(dev.id)
+    name = props["name"].decode("utf-8") if isinstance(props["name"], (bytes, bytearray)) else str(props["name"])
+    print(name)  # e.g. "NVIDIA GeForce RTX 3090"
     _cflm_max_abs_sum = None
     if _cp is not None:
         _cflm_max_abs_sum = _cp.ReductionKernel(
