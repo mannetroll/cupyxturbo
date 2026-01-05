@@ -596,13 +596,13 @@ def create_dns_state(
         plan_mod = None
         if _cpfft is not None and hasattr(_cpfft, "get_fft_plan"):
             plan_mod = _cpfft
-            print(f"Using cuFFT for FFT plans: {_cpfft.get_fft_plan()}")
 
         if plan_mod is not None:
             # Forward: rfft2 on real UR_full over (z,x) axes
             state.fft_plan_rfft2_ur_full = plan_mod.get_fft_plan(
                 state.ur_full, axes=(1, 2), value_type="R2C"
             )
+            print(f"fft_plan_rfft2_ur_full: {state.fft_plan_rfft2_ur_full}")
             # Inverse: irfft2 on UC_full[0:2] over (z,x) axes back to real
             state.fft_plan_irfft2_uc01 = plan_mod.get_fft_plan(
                 state.uc_full[0:2],
@@ -610,6 +610,7 @@ def create_dns_state(
                 axes=(1, 2),
                 value_type="C2R",
             )
+            print(f"fft_plan_irfft2_uc01: {state.fft_plan_irfft2_uc01}")
 
         if plan_mod is None:
             print("FFT plan_mod: None")
