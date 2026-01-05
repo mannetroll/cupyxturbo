@@ -1322,7 +1322,7 @@ def dns_step2a(S: DnsState) -> None:
     off_x = (NX_full - NX) // 2
     off_z = (NZ_full - NZ) // 2
 
-    if S.backend == "gpu" and _cp is not None:
+    if S.backend == "gpu" and _cp is not None and False:
         global _STEP2A_CROP_KERNEL
         if _STEP2A_CROP_KERNEL is None:
             crop_src = r'''
