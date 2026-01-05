@@ -1033,7 +1033,7 @@ def dns_step3(S: DnsState) -> None:
     global _STEP3_UPDATE_KERNEL, _STEP3_BUILD_UC_KERNEL
     # Fast GPU path: fuse the heavy STEP3 arithmetic into a couple of custom kernels.
     # This avoids a large number of small elementwise launches (dominant in Scalene).
-    if S.backend == "gpu" and _cp is not None:
+    if S.backend == "gpu" and _cp is not None and False:
 
         # Compile once per process
         if _STEP3_UPDATE_KERNEL is None:
