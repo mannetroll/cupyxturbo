@@ -1149,6 +1149,17 @@ def dns_step3(S: DnsState, fuse: bool = True) -> None:
         n = NZ * NX_half
         blocks = (n + threads - 1) // threads
 
+        # IMPORTANT: RawKernel scalar args must match the C signature types.
+        # On 64-bit Python, passing plain Python ints/floats will typically be int64/float64,
+        # which corrupts the kernel argument packing (and silently breaks the physics).
+        NK_full_i32 = _np.int32(NK_full)
+        NX_half_i32 = _np.int32(NX_half)
+        NZ_i32 = _np.int32(NZ)
+        divxz_f32 = _np.float32(S.step3_divxz)
+        visc_f32 = _np.float32(S.visc)
+        dt_f32 = _np.float32(S.dt)
+        cnm1_f32 = _np.float32(S.cnm1)
+
         # UPDATE: compute FN, update om2, update fnm1
         _STEP3_UPDATE_KERNEL(
             (blocks,),
@@ -1158,11 +1169,11 @@ def dns_step3(S: DnsState, fuse: bool = True) -> None:
                 S.step3_z_spec,
                 S.step3_GA, S.step3_G2mA2, S.step3_K2,
                 S.om2, S.fnm1,
-                NK_full, NX_half, NZ,
-                float(S.step3_divxz),
-                float(S.visc),
-                float(S.dt),
-                float(S.cnm1),
+                NK_full_i32, NX_half_i32, NZ_i32,
+                divxz_f32,
+                visc_f32,
+                dt_f32,
+                cnm1_f32,
             ),
         )
 
@@ -1178,11 +1189,9 @@ def dns_step3(S: DnsState, fuse: bool = True) -> None:
                 S.step3_inv_gamma0,
                 S.scratch1,
                 S.scratch2,
-                NX_half, NZ,
+                NX_half_i32, NZ_i32,
             ),
-        )
-
-        # Scatter into uc_full low-k band (strided in NK_full, keep the simple slice assign)
+        )# Scatter into uc_full low-k band (strided in NK_full, keep the simple slice assign)
         uc_full[0, :NZ, :NX_half] = S.scratch1
         uc_full[1, :NZ, :NX_half] = S.scratch2
 
@@ -1497,32 +1506,6 @@ def dns_stream_func(S: DnsState) -> None:
     phys = _spectral_band_to_phys_full_grid(S, phi_hat)
     S.ur_full[2, :, :] = phys
 
-import cupy as cp
-
-def _dbg_step3_compare(S):
-    # clone state arrays
-    om2_a = S.om2.copy()
-    fnm1_a = S.fnm1.copy()
-    uc_a = S.uc_full.copy()
-
-    om2_b = S.om2.copy()
-    fnm1_b = S.fnm1.copy()
-    uc_b = S.uc_full.copy()
-
-    # run old step3 on A
-    S.om2 = om2_a; S.fnm1 = fnm1_a; S.uc_full = uc_a
-    dns_step3(S, False)   # <-- cpu impl
-
-    # run fused step3 on B
-    S.om2 = om2_b; S.fnm1 = fnm1_b; S.uc_full = uc_b
-    dns_step3(S, True)    # <-- your kernel path only
-
-    def maxabs(x): return float(cp.max(cp.abs(x)))
-
-    print("om2  max|diff|:", maxabs(om2_a - om2_b))
-    print("fnm1 max|diff|:", maxabs(fnm1_a - fnm1_b))
-    print("uc0  max|diff|:", maxabs(uc_a[0] - uc_b[0]))
-    print("uc1  max|diff|:", maxabs(uc_a[1] - uc_b[1]))
 
 # ---------------------------------------------------------------------------
 # Main driver (Python version of main in dns_all.cu)
@@ -1583,13 +1566,12 @@ def run_dns(
             S.it = it
             dt_old = S.dt
             dns_step2b(S)
-            _dbg_step3_compare(S)
-            #dns_step3(S)
-            #dns_step2a(S)
-            #if (it % 100) == 0 or it == 1 or it == STEPS:
-            #    next_dt(S)
-            #    print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f} CFLM={float(compute_cflm(S)):.6f}")
-            #S.t += dt_old
+            dns_step3(S)
+            dns_step2a(S)
+            if (it % 100) == 0 or it == 1 or it == STEPS:
+                next_dt(S)
+                print(f" ITERATION {it:6d} T={S.t:12.10f} DT={S.dt:10.8f} CN={S.cn:10.8f} CFLM={float(compute_cflm(S)):.6f}")
+            S.t += dt_old
 
         S.sync()
         t1 = time.perf_counter()
