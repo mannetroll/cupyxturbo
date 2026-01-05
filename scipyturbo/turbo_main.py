@@ -1066,6 +1066,7 @@ def main() -> None:
     app.setWindowIcon(icon)
 
     sim = DnsSimulator(n=256)
+    print(f" backend: {sim.state.backend}")
     sim.step(1)
     window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
