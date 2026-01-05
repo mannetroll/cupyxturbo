@@ -79,6 +79,8 @@ class DnsSimulator:
             self.cn = float(self.state.cn)
             self.iteration = 0
 
+            self._next_dt_pending = True  # NEXTDT is executed just before rendering
+
             # which field to visualize
             self.current_var = self.VAR_U
 
@@ -131,16 +133,17 @@ class DnsSimulator:
             dns_all.dns_step3(S)
             dns_all.dns_step2a(S)
 
-        # Call NEXTDT every mod_next_dt iterations
-        if (self.iteration % mod_next_dt) == 0:
-            dns_all.next_dt(S)
-
+        # NEXTDT is executed only immediately before rendering (get_frame_pixels)
+        # to avoid an extra GPU->CPU sync point in the middle of the step loop.
         S.t += dt_old
 
         self.t = float(S.t)
         self.dt = float(S.dt)
         self.cn = float(S.cn)
         self.iteration += 1
+
+        if (self.iteration % mod_next_dt) == 0:
+            self._next_dt_pending = True
 
     def set_N(self, N: int) -> None:
         start = perf_counter()
@@ -200,6 +203,7 @@ class DnsSimulator:
         self.dt = float(self.state.dt)
         self.cn = float(self.state.cn)
         self.iteration = 0
+        self._next_dt_pending = True
         elapsed = perf_counter() - start
         print(f" DNS initialization took {elapsed:.3f} seconds")
 
@@ -211,6 +215,7 @@ class DnsSimulator:
         self.dt = np.float32(0.0)
         self.cn = np.float32(1.0)
         self.iteration = 0
+        self._next_dt_pending = True
         # Pick a fresh PAO seed each reset (LCG is mod 5011 → use 1..5010)
         seed = 1 + (int.from_bytes(os.urandom(8), "little") % 5010)
 
@@ -397,6 +402,15 @@ class DnsSimulator:
 
         Return an 8-bit contiguous array so the GUI can push it straight into a QImage.
         """
+        S = self.state
+
+        if self._next_dt_pending:
+            dns_all.next_dt(S)
+            self._next_dt_pending = False
+
+            self.dt = float(S.dt)
+            self.cn = float(S.cn)
+
         plane = self.make_pixels_component(self.current_var)
         return np.ascontiguousarray(plane, dtype=np.uint8)
 
