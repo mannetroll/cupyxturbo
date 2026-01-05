@@ -47,13 +47,13 @@ try:
     _cflm_max_abs_sum = None
     if _cp is not None:
         _cflm_max_abs_sum = _cp.ReductionKernel(
-            in_params="float32 u, float32 w",
+            in_params="float32 u, float32 w, float32 inv_dx",
             out_params="float32 out",
-            map_expr="fabsf(u) + fabsf(w)",
+            map_expr="(fabsf(u) + fabsf(w)) * inv_dx",
             reduce_expr="max(a, b)",
             post_map_expr="out = a",
             identity="0.0f",
-            name="cflm_max_abs_sum",
+            name="cflm_max_abs_sum_inv_dx",
         )
 except Exception:  # CuPy is optional
     _cp = None
@@ -876,9 +876,8 @@ def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
             ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
 
     # Match previous STEP2A behavior exactly: scale BEFORE float32 cast/assign.
-    ur01 *= (S.NZ_full * S.NX_full)
-
-    S.ur_full[0:2, :, :] = xp.asarray(ur01, dtype=xp.float32)
+    scale = xp.float32(S.NZ_full * S.NX_full)
+    xp.multiply(ur01, scale, out=S.ur_full[0:2, :, :])
     S.ur_full[2, :, :] = xp.float32(0.0)
 
 
@@ -1392,7 +1391,7 @@ def compute_cflm(S: DnsState):
     w = S.ur_full[1, :NZ3D2, :NX3D2]
 
     if S.backend == "gpu" and _cflm_max_abs_sum is not None:
-        CFLM = _cflm_max_abs_sum(u, w) * xp.float32(S.inv_dx)  # GPU scalar
+        CFLM = _cflm_max_abs_sum(u, w, xp.float32(S.inv_dx))  # GPU scalar (already scaled)
         return CFLM
 
     # CPU (or fallback): keep current code path
