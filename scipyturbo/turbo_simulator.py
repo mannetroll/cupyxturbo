@@ -43,7 +43,7 @@ try:
     dev = _cp.cuda.Device()
     props = _cp.cuda.runtime.getDeviceProperties(dev.id)
     name = props["name"].decode("utf-8") if isinstance(props["name"], (bytes, bytearray)) else str(props["name"])
-    print(f"\r\nGPU:  {name}")  # e.g. "NVIDIA GeForce RTX 3090"
+    print(f"\r\nGPU: {name}")  # e.g. "NVIDIA GeForce RTX 3090"
     _cflm_max_abs_sum = None
     if _cp is not None:
         _cflm_max_abs_sum = _cp.ReductionKernel(
