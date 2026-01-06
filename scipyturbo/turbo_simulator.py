@@ -43,7 +43,7 @@ try:
     dev = _cp.cuda.Device()
     props = _cp.cuda.runtime.getDeviceProperties(dev.id)
     name = props["name"].decode("utf-8") if isinstance(props["name"], (bytes, bytearray)) else str(props["name"])
-    print(f"  GPU:  {name}")  # e.g. "NVIDIA GeForce RTX 3090"
+    print(f"\r\nGPU:  {name}")  # e.g. "NVIDIA GeForce RTX 3090"
     _cflm_max_abs_sum = None
     if _cp is not None:
         _cflm_max_abs_sum = _cp.ReductionKernel(
@@ -57,7 +57,7 @@ try:
         )
 except Exception:  # CuPy is optional
     _cp = None
-    print("  CPU: CuPy not installed")
+    print("\r\nCPU: CuPy not installed")
 
 import numpy as np  # in addition to your existing _np alias, this is fine
 
