@@ -43,7 +43,7 @@ try:
     dev = _cp.cuda.Device()
     props = _cp.cuda.runtime.getDeviceProperties(dev.id)
     name = props["name"].decode("utf-8") if isinstance(props["name"], (bytes, bytearray)) else str(props["name"])
-    print(f"  GPU:  {name}")  # e.g. "NVIDIA GeForce RTX 3090"
+    print(f"\r\nGPU: {name}")  # e.g. "NVIDIA GeForce RTX 3090"
     _cflm_max_abs_sum = None
     if _cp is not None:
         _cflm_max_abs_sum = _cp.ReductionKernel(
@@ -57,7 +57,7 @@ try:
         )
 except Exception:  # CuPy is optional
     _cp = None
-    print("  CPU: CuPy not installed")
+    print("\r\nCPU: CuPy not installed")
 
 import numpy as np  # in addition to your existing _np alias, this is fine
 
@@ -530,7 +530,6 @@ def create_dns_state(
     else:
         effective_backend = backend
 
-    print(f" backend:  {backend}")
     Nbase = N
     NX = N
     NZ = N
@@ -567,7 +566,6 @@ def create_dns_state(
         seed_init=int(seed),
         fft_workers=4,
     )
-    print(f" workers (CPU): {state.fft_workers}")
 
     # Cache FFT module for the chosen backend (avoid per-call selection)
     state.fft = _fft_mod_for_state(state)
@@ -617,6 +615,8 @@ def create_dns_state(
             print("FFT plan_mod: None")
         else:
             print(f"FFT plan_mod: {plan_mod.__name__}")
+    else:
+        print(f"FFT workers (CPU): {state.fft_workers}")
 
     # PAO-style initialization (dnsCudaPaoHostInit)
     dns_pao_host_init(state)
@@ -740,7 +740,7 @@ def dns_pao_host_init(S: DnsState):
     # ------------------------------------------------------------------
     # Generate isotropic random spectrum (Fortran DO 500/510 loops)
     # ------------------------------------------------------------------
-    print("Generate isotropic random spectrum... " + ("(Numba)" if (_nb is not None) else "(Python)"))
+    print(" Generate isotropic random spectrum... " + ("(Numba)" if (_nb is not None) else "(Python)"))
 
     UR, seed_out, visc_f32, Q2, W2, E110, A1, A2, A3, A4, A5, A6, A7 = _pao_build_ur_and_stats(
         N=N,
@@ -777,35 +777,35 @@ def dns_pao_host_init(S: DnsState):
     Ceps2 = 0.5 * Q2 * De / (EP * EP)
 
     # Print diagnostics exactly like the CUDA/Fortran version
-    print(f" N           ={N:12.0f}")
-    print(f" Reynolds n. ={float(S.Re):12.1g}")
-    print(f" K0          ={K0:12.0f}")
-    print(f" Energy      ={Q2:12.4f}")
-    print(f" WiWi        ={W2:12.4f}")
-    print(f" Epsilon     ={EP:12.4f}")
-    print(f" a11         ={a11:12.4f}")
-    print(f" e11         ={e11:12.4f}")
-    print(f" Time scale  ={tscale:12.4g}")
-    print(f" Kolmogorov  ={KOL:12.4f}")
-    print(f" Viscosity   ={visc:12.4f}")
-    print(f" dx/Kol.     ={dxKol:12.4f}")
-    print(f" 2Pi/Nlamda  ={NLAM:12.4f}")
-    print(f" 2Pi/Lux     ={Lux:12.4f}")
-    print(f" 2Pi/Luz     ={Luz:12.4f}")
-    print(f" 2Pi/Lwx     ={Lwx:12.4f}")
-    print(f" 2Pi/Lwz     ={Lwz:12.4f}")
-    print(f" Deps.       ={De:12.4f}")
-    print(f" Ceps2       ={Ceps2:12.4f}")
-    print(f" E1          ={float(E1):12.4f}")
-    print(f" E3          ={float(E3):12.4f}")
-    print(f" PAO seed    ={seed[0]:12d}")
+    print(f" N           = {N:.8g}")
+    print(f" Reynolds n. = {float(S.Re):.8g}")
+    print(f" K0          = {K0:.8g}")
+    print(f" Energy      = {Q2:.8g}")
+    print(f" WiWi        = {W2:.8g}")
+    #print(f" Epsilon     = {EP:.8g}")
+    #print(f" a11         = {a11:.8g}")
+    #print(f" e11         = {e11:.8g}")
+    print(f" Time scale  = {tscale:.8g}")
+    print(f" Kolmogorov  = {KOL:.8g}")
+    print(f" Viscosity   = {visc:.8g}")
+    print(f" dx/Kol.     = {dxKol:.8g}")
+    #print(f" 2Pi/Nlamda  = {NLAM:.8g}")
+    #print(f" 2Pi/Lux     = {Lux:.8g}")
+    #print(f" 2Pi/Luz     = {Luz:.8g}")
+    #print(f" 2Pi/Lwx     = {Lwx:.8g}")
+    #print(f" 2Pi/Lwz     = {Lwz:.8g}")
+    #print(f" Deps.       = {De:.8g}")
+    #print(f" Ceps2       = {Ceps2:.8g}")
+    #print(f" E1          = {float(E1):.8g}")
+    #print(f" E3          = {float(E3):.8g}")
+    print(f" PAO seed    = {seed[0]:.8g}")
 
     # ------------------------------------------------------------------
     # Scatter spectral UR → compact UC(kx,z,comp) buffer (current grid)
     #   UC: (NK, NE, 3) on host, but DnsState.uc is (NZ, NK, 3) in xp
     # ------------------------------------------------------------------
     NK = S.NK
-    print(f" UC_host = np.zeros(({NK}, {NE}, 3), dtype=np.complex64)")
+    #print(f" UC_host = np.zeros(({NK}, {NE}, 3), dtype=np.complex64)")
     UC_host = np.zeros((NK, NE, 3), dtype=np.complex64)  # only comp 0,1 used
 
     for z in range(NE):
@@ -817,14 +817,14 @@ def dns_pao_host_init(S: DnsState):
     NK_full = S.NK_full
     NZ_full = S.NZ_full
 
-    print(f" UC_full_host = np.zeros(({NK_full}, {NZ_full}, 3), dtype=np.complex64)")
+    #print(f" UC_full_host = np.zeros(({NK_full}, {NZ_full}, 3), dtype=np.complex64)")
     UC_full_host = np.zeros((NK_full, NZ_full, 3), dtype=np.complex64)
     for z in range(NE):
         for x in range(ND2):
             for c in range(2):
                 UC_full_host[x, z, c] = UR[x, z, c]
 
-    print(f" PAO INITIALIZATION OK. VISC={float(S.visc):.7g}")
+    print(f" PAO INITIALIZATION OK. VISC={float(S.visc):.8g}")
 
     # ------------------------------------------------------------------
     # Move alfa/gamma/UC/UC_full into DnsState (xp backend, SoA layout)
@@ -848,7 +848,7 @@ def dns_pao_host_init(S: DnsState):
     vfft_full_inverse_uc_full_to_ur_full(S)
 
     # Spectral vorticity from UC_full, like dnsCudaCalcom
-    print(f" dns_calcom_from_uc_full(S)")
+    #print(f" dns_calcom_from_uc_full(S)")
     dns_calcom_from_uc_full(S)
 
     # No history yet
@@ -1628,9 +1628,9 @@ def run_dns(
         elap = t1 - t0
         fps = (STEPS / elap) if elap > 0 else 0.0
 
-        print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:8g}")
-        print(f" Final T={S.t:8g}  CN={S.cn:8g}  DT={S.dt:8g}")
-        print(f" FPS = {fps:7g}")
+        print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:.8g}")
+        print(f" Final T={S.t:.8g}  CN={S.cn:.8g}  DT={S.dt:.8g}")
+        print(f" FPS = {fps:.8g}")
 
 def main():
     args = sys.argv[1:]
