@@ -79,10 +79,11 @@ class DnsSimulator:
             self.cn = float(self.state.cn)
             self.iteration = 0
 
-            self._next_dt_pending = True  # NEXTDT is executed just before rendering
-
             # which field to visualize
             self.current_var = self.VAR_U
+
+            # schedule NEXTDT at the next render tick (so it shares the render sync)
+            self._next_dt_pending = True
 
             # initialize Python DNS state (mirror dns_all.run_dns NEXTDT INIT)
             #   1) initial STEP2A from spectral to physical
@@ -133,17 +134,19 @@ class DnsSimulator:
             dns_all.dns_step3(S)
             dns_all.dns_step2a(S)
 
-        # NEXTDT is executed only immediately before rendering (get_frame_pixels)
-        # to avoid an extra GPU->CPU sync point in the middle of the step loop.
+        # Call NEXTDT every mod_next_dt iterations.
+        #
+        # IMPORTANT (GPU): dns_all.next_dt() pulls a device scalar to host, which is a hard sync.
+        # To avoid creating an extra sync point in the hot step loop, we only *schedule* NEXTDT here
+        # and execute it in get_frame_pixels() right before we pull pixels to the CPU.
+        if (self.iteration % mod_next_dt) == 0:
+            self._next_dt_pending = True
         S.t += dt_old
 
         self.t = float(S.t)
         self.dt = float(S.dt)
         self.cn = float(S.cn)
         self.iteration += 1
-
-        if (self.iteration % mod_next_dt) == 0:
-            self._next_dt_pending = True
 
     def set_N(self, N: int) -> None:
         start = perf_counter()
@@ -215,7 +218,6 @@ class DnsSimulator:
         self.dt = np.float32(0.0)
         self.cn = np.float32(1.0)
         self.iteration = 0
-        self._next_dt_pending = True
         # Pick a fresh PAO seed each reset (LCG is mod 5011 → use 1..5010)
         seed = 1 + (int.from_bytes(os.urandom(8), "little") % 5010)
 
@@ -256,6 +258,7 @@ class DnsSimulator:
         self.dt = float(self.state.dt)
         self.cn = float(self.state.cn)
 
+        self._next_dt_pending = True
         elapsed = perf_counter() - start
         print(f" DNS initialization took {elapsed:.3f} seconds")
 
@@ -305,6 +308,55 @@ class DnsSimulator:
         return pix
 
     # ------------------------------------------------------------------
+    def _snapshot_u8_cp(self, comp: int):
+        """GPU-only: return uint8 pixels on the device (no host transfer)."""
+        import cupy as cp  # type: ignore
+
+        S = self.state
+        idx = int(comp) - 1
+        if idx < 0 or idx > 2:
+            idx = 0
+
+        field_cp = S.ur_full[idx, :, :]
+        pix_cp = self._float_to_pixels_gpu(field_cp)
+        return pix_cp
+
+    def _make_pixels_component_u8_cp(self, var: int) -> "cp.ndarray":
+        """GPU-only: selector used by get_frame_pixels(); returns uint8 pixels on the device."""
+        import cupy as cp  # type: ignore
+
+        S = self.state
+
+        if var == self.VAR_U:
+            pix_cp = self._snapshot_u8_cp(1)
+
+        elif var == self.VAR_V:
+            pix_cp = self._snapshot_u8_cp(2)
+
+        elif var == self.VAR_ENERGY:
+            # Use dns_all kinetic helper: fills ur_full[2,:,:]
+            dns_all.dns_kinetic(S)
+            field_cp = S.ur_full[2, :, :]
+            pix_cp = self._float_to_pixels_gpu(field_cp)
+
+        elif var == self.VAR_OMEGA:
+            # Use dns_all omega→physical helper: fills ur_full[2,:,:]
+            dns_all.dns_om2_phys(S)
+            field_cp = S.ur_full[2, :, :]
+            pix_cp = self._float_to_pixels_gpu(field_cp)
+
+        elif var == self.VAR_STREAM:
+            # Use dns_all stream-function helper: fills ur_full[2,:,:]
+            dns_all.dns_stream_func(S)
+            field_cp = S.ur_full[2, :, :]
+            pix_cp = self._float_to_pixels_gpu(field_cp)
+
+        else:
+            pix_cp = self._snapshot_u8_cp(1)
+
+        return pix_cp
+
+    # ------------------------------------------------------------------
     def _snapshot(self, comp: int) -> np.ndarray:
         """
         Raw snapshot from Fortran, now using dns_frame with 3× scale-up.
@@ -319,8 +371,7 @@ class DnsSimulator:
 
         if S.backend == "gpu":
             import cupy as cp  # type: ignore
-            field_cp = S.ur_full[idx, :, :]
-            pix_cp = self._float_to_pixels_gpu(field_cp)
+            pix_cp = self._snapshot_u8_cp(comp)
             return cp.asnumpy(pix_cp)
         else:
             field = np.asarray(S.ur_full[idx, :, :])
@@ -404,14 +455,29 @@ class DnsSimulator:
         """
         S = self.state
 
-        if self._next_dt_pending:
-            dns_all.next_dt(S)
-            self._next_dt_pending = False
+        if S.backend == "gpu":
+            import cupy as cp  # type: ignore
 
-            self.dt = float(S.dt)
-            self.cn = float(S.cn)
+            # Build the uint8 pixels on the device first...
+            pix_cp = self._make_pixels_component_u8_cp(self.current_var)
 
-        plane = self.make_pixels_component(self.current_var)
+            # ...then run NEXTDT (if scheduled) before we pull pixels to host.
+            # This makes the unavoidable frame sync (device->host) also cover NEXTDT.
+            if getattr(self, "_next_dt_pending", False):
+                dns_all.next_dt(S)
+                self._next_dt_pending = False
+
+            plane = cp.asnumpy(pix_cp)
+        else:
+            # CPU path unchanged
+            plane = self.make_pixels_component(self.current_var)
+
+            # Keep the same NEXTDT cadence on CPU too (no device sync cost),
+            # but still only do it at the render tick.
+            if getattr(self, "_next_dt_pending", False):
+                dns_all.next_dt(S)
+                self._next_dt_pending = False
+
         return np.ascontiguousarray(plane, dtype=np.uint8)
 
     def set_variable(self, var: int) -> None:
