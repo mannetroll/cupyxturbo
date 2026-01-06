@@ -48,7 +48,6 @@ class DnsSimulator:
         self.max_steps = 5000
 
         # --- ONLY: max SciPy FFT workers on CPU ---
-        self.fft_workers = 4
         self.fft_workers = 5
         start = perf_counter()
 
@@ -83,14 +82,24 @@ class DnsSimulator:
             # which field to visualize
             self.current_var = self.VAR_U
 
+            # schedule NEXTDT at the next render tick (so it shares the render sync)
+            self._next_dt_pending = True
+
             # initialize Python DNS state (mirror dns_all.run_dns NEXTDT INIT)
             #   1) initial STEP2A from spectral to physical
             #   2) compute CFLM
             #   3) set DT and CN from CFL condition
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
+
             # CFLM * DT * PI = CFLNUM  →  DT = CFLNUM / (CFLM * PI)
-            self.state.dt = self.state.cflnum / (CFLM * math.pi)
+            if self.state.backend == "gpu":
+                # CFLM is a device scalar; pull to host ONCE here so dt/cn/cnm1 stay floats
+                CFLM_h = float(CFLM.item()) if hasattr(CFLM, "item") else float(CFLM)
+                self.state.dt = float(self.state.cflnum) / (CFLM_h * math.pi)
+            else:
+                self.state.dt = self.state.cflnum / (CFLM * math.pi)
+
             self.state.cn = 1.0
             self.state.cnm1 = 0.0
 
@@ -102,7 +111,7 @@ class DnsSimulator:
             print(f" DNS initialization took {elapsed:.3f} seconds")
 
     # ------------------------------------------------------------------
-    def step(self, mod_next_dt: int, run_next_dt=False) -> None:
+    def step(self, mod_next_dt: int) -> None:
         """Advance one DNS step on the Fortran side."""
         # In the pure-Python version this mirrors dns_all.run_dns:
         #   dt_old = DT
@@ -125,10 +134,13 @@ class DnsSimulator:
             dns_all.dns_step3(S)
             dns_all.dns_step2a(S)
 
-        # Call NEXTDT every mod_next_dt iterations
-        if (self.iteration % mod_next_dt) == 0 or run_next_dt:
-            dns_all.next_dt(S)
-
+        # Call NEXTDT every mod_next_dt iterations.
+        #
+        # IMPORTANT (GPU): dns_all.next_dt() pulls a device scalar to host, which is a hard sync.
+        # To avoid creating an extra sync point in the hot step loop, we only *schedule* NEXTDT here
+        # and execute it in get_frame_pixels() right before we pull pixels to the CPU.
+        if (self.iteration % mod_next_dt) == 0:
+            self._next_dt_pending = True
         S.t += dt_old
 
         self.t = float(S.t)
@@ -181,7 +193,12 @@ class DnsSimulator:
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
 
-        self.state.dt = self.state.cflnum / (CFLM * math.pi)
+        if self.state.backend == "gpu":
+            CFLM_h = float(CFLM.item()) if hasattr(CFLM, "item") else float(CFLM)
+            self.state.dt = float(self.state.cflnum) / (CFLM_h * math.pi)
+        else:
+            self.state.dt = self.state.cflnum / (CFLM * math.pi)
+
         self.state.cn = 1.0
         self.state.cnm1 = 0.0
 
@@ -189,6 +206,7 @@ class DnsSimulator:
         self.dt = float(self.state.dt)
         self.cn = float(self.state.cn)
         self.iteration = 0
+        self._next_dt_pending = True
         elapsed = perf_counter() - start
         print(f" DNS initialization took {elapsed:.3f} seconds")
 
@@ -227,7 +245,12 @@ class DnsSimulator:
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
 
-        self.state.dt = self.state.cflnum / (CFLM * math.pi)
+        if self.state.backend == "gpu":
+            CFLM_h = float(CFLM.item()) if hasattr(CFLM, "item") else float(CFLM)
+            self.state.dt = float(self.state.cflnum) / (CFLM_h * math.pi)
+        else:
+            self.state.dt = self.state.cflnum / (CFLM * math.pi)
+
         self.state.cn = 1.0
         self.state.cnm1 = 0.0
 
@@ -235,6 +258,7 @@ class DnsSimulator:
         self.dt = float(self.state.dt)
         self.cn = float(self.state.cn)
 
+        self._next_dt_pending = True
         elapsed = perf_counter() - start
         print(f" DNS initialization took {elapsed:.3f} seconds")
 
@@ -261,6 +285,77 @@ class DnsSimulator:
 
         return pix.astype(np.uint8)
 
+    def _float_to_pixels_gpu(self, field_cp):
+        """
+        GPU path: normalize->uint8 on GPU; caller transfers uint8 only.
+        """
+        import cupy as cp  # type: ignore
+
+        fmin = field_cp.min()
+        fmax = field_cp.max()
+        rng = fmax - fmin
+
+        eps = cp.float32(1.0e-12)
+        is_const = cp.abs(rng) <= eps
+
+        denom = cp.where(is_const, cp.float32(1.0), rng)
+        norm = (field_cp - fmin) / denom
+        pixf = cp.float32(1.0) + norm * cp.float32(254.0)
+        pixf = cp.clip(pixf, cp.float32(1.0), cp.float32(255.0))
+
+        pix = pixf.astype(cp.uint8)
+        pix = cp.where(is_const, cp.uint8(128), pix)
+        return pix
+
+    # ------------------------------------------------------------------
+    def _snapshot_u8_cp(self, comp: int):
+        """GPU-only: return uint8 pixels on the device (no host transfer)."""
+        import cupy as cp  # type: ignore
+
+        S = self.state
+        idx = int(comp) - 1
+        if idx < 0 or idx > 2:
+            idx = 0
+
+        field_cp = S.ur_full[idx, :, :]
+        pix_cp = self._float_to_pixels_gpu(field_cp)
+        return pix_cp
+
+    def _make_pixels_component_u8_cp(self, var: int) -> "cp.ndarray":
+        """GPU-only: selector used by get_frame_pixels(); returns uint8 pixels on the device."""
+        import cupy as cp  # type: ignore
+
+        S = self.state
+
+        if var == self.VAR_U:
+            pix_cp = self._snapshot_u8_cp(1)
+
+        elif var == self.VAR_V:
+            pix_cp = self._snapshot_u8_cp(2)
+
+        elif var == self.VAR_ENERGY:
+            # Use dns_all kinetic helper: fills ur_full[2,:,:]
+            dns_all.dns_kinetic(S)
+            field_cp = S.ur_full[2, :, :]
+            pix_cp = self._float_to_pixels_gpu(field_cp)
+
+        elif var == self.VAR_OMEGA:
+            # Use dns_all omega→physical helper: fills ur_full[2,:,:]
+            dns_all.dns_om2_phys(S)
+            field_cp = S.ur_full[2, :, :]
+            pix_cp = self._float_to_pixels_gpu(field_cp)
+
+        elif var == self.VAR_STREAM:
+            # Use dns_all stream-function helper: fills ur_full[2,:,:]
+            dns_all.dns_stream_func(S)
+            field_cp = S.ur_full[2, :, :]
+            pix_cp = self._float_to_pixels_gpu(field_cp)
+
+        else:
+            pix_cp = self._snapshot_u8_cp(1)
+
+        return pix_cp
+
     # ------------------------------------------------------------------
     def _snapshot(self, comp: int) -> np.ndarray:
         """
@@ -276,11 +371,11 @@ class DnsSimulator:
 
         if S.backend == "gpu":
             import cupy as cp  # type: ignore
-            field = cp.asnumpy(S.ur_full[idx, :, :])
+            pix_cp = self._snapshot_u8_cp(comp)
+            return cp.asnumpy(pix_cp)
         else:
             field = np.asarray(S.ur_full[idx, :, :])
-
-        return self._float_to_pixels(field)
+            return self._float_to_pixels(field)
 
     # ------------------------------------------------------------------
     def make_pixels(self, comp: int = 1) -> np.ndarray:
@@ -307,35 +402,46 @@ class DnsSimulator:
 
         if var == self.VAR_U:
             plane = self._snapshot(1)
+
         elif var == self.VAR_V:
             plane = self._snapshot(2)
+
         elif var == self.VAR_ENERGY:
             # Use dns_all kinetic helper: fills ur_full[2,:,:]
             dns_all.dns_kinetic(S)
             if S.backend == "gpu":
                 import cupy as cp  # type: ignore
-                field = cp.asnumpy(S.ur_full[2, :, :])
+                field_cp = S.ur_full[2, :, :]
+                pix_cp = self._float_to_pixels_gpu(field_cp)
+                plane = cp.asnumpy(pix_cp)
             else:
                 field = np.asarray(S.ur_full[2, :, :])
-            plane = self._float_to_pixels(field)
+                plane = self._float_to_pixels(field)
+
         elif var == self.VAR_OMEGA:
             # Use dns_all omega→physical helper: fills ur_full[2,:,:]
             dns_all.dns_om2_phys(S)
             if S.backend == "gpu":
                 import cupy as cp  # type: ignore
-                field = cp.asnumpy(S.ur_full[2, :, :])
+                field_cp = S.ur_full[2, :, :]
+                pix_cp = self._float_to_pixels_gpu(field_cp)
+                plane = cp.asnumpy(pix_cp)
             else:
                 field = np.asarray(S.ur_full[2, :, :])
-            plane = self._float_to_pixels(field)
+                plane = self._float_to_pixels(field)
+
         elif var == self.VAR_STREAM:
             # Use dns_all stream-function helper: fills ur_full[2,:,:]
             dns_all.dns_stream_func(S)
             if S.backend == "gpu":
                 import cupy as cp  # type: ignore
-                field = cp.asnumpy(S.ur_full[2, :, :])
+                field_cp = S.ur_full[2, :, :]
+                pix_cp = self._float_to_pixels_gpu(field_cp)
+                plane = cp.asnumpy(pix_cp)
             else:
                 field = np.asarray(S.ur_full[2, :, :])
-            plane = self._float_to_pixels(field)
+                plane = self._float_to_pixels(field)
+
         else:
             plane = self._snapshot(1)
 
@@ -345,17 +451,34 @@ class DnsSimulator:
     def get_frame_pixels(self) -> np.ndarray:
         """Used by the Qt app worker thread.
 
-        FIELD2PIX / dns_frame currently return 32-bit packed gray pixels
-        (0x00LLLLLL). Here we reduce that once to an 8-bit contiguous
-        array so the GUI can push it straight into a QImage.
+        Return an 8-bit contiguous array so the GUI can push it straight into a QImage.
         """
-        plane = self.make_pixels_component(self.current_var)
+        S = self.state
 
-        # plane is already uint8 [0..255]; we keep the original logic
-        #   pixels32 & 0xFF  → pixels8
-        pixels32 = np.asarray(plane, dtype=np.uint32)
-        pixels8 = (pixels32 & 0xFF).astype(np.uint8)
-        return np.ascontiguousarray(pixels8)
+        if S.backend == "gpu":
+            import cupy as cp  # type: ignore
+
+            # Build the uint8 pixels on the device first...
+            pix_cp = self._make_pixels_component_u8_cp(self.current_var)
+
+            # ...then run NEXTDT (if scheduled) before we pull pixels to host.
+            # This makes the unavoidable frame sync (device->host) also cover NEXTDT.
+            if getattr(self, "_next_dt_pending", False):
+                dns_all.next_dt(S)
+                self._next_dt_pending = False
+
+            plane = cp.asnumpy(pix_cp)
+        else:
+            # CPU path unchanged
+            plane = self.make_pixels_component(self.current_var)
+
+            # Keep the same NEXTDT cadence on CPU too (no device sync cost),
+            # but still only do it at the render tick.
+            if getattr(self, "_next_dt_pending", False):
+                dns_all.next_dt(S)
+                self._next_dt_pending = False
+
+        return np.ascontiguousarray(plane, dtype=np.uint8)
 
     def set_variable(self, var: int) -> None:
         """Select which variable the GUI should visualize."""
