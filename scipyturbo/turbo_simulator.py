@@ -741,7 +741,7 @@ def dns_pao_host_init(S: DnsState):
     # ------------------------------------------------------------------
     # Generate isotropic random spectrum (Fortran DO 500/510 loops)
     # ------------------------------------------------------------------
-    print("Generate isotropic random spectrum... " + ("(Numba)" if (_nb is not None) else "(Python)"))
+    print(" Generate isotropic random spectrum... " + ("(Numba)" if (_nb is not None) else "(Python)"))
 
     UR, seed_out, visc_f32, Q2, W2, E110, A1, A2, A3, A4, A5, A6, A7 = _pao_build_ur_and_stats(
         N=N,
