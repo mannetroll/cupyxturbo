@@ -530,7 +530,7 @@ def create_dns_state(
     else:
         effective_backend = backend
 
-    print(f" backend:  {backend}")
+    print(f" effective:  {effective_backend}")
     Nbase = N
     NX = N
     NZ = N
@@ -805,7 +805,7 @@ def dns_pao_host_init(S: DnsState):
     #   UC: (NK, NE, 3) on host, but DnsState.uc is (NZ, NK, 3) in xp
     # ------------------------------------------------------------------
     NK = S.NK
-    print(f" UC_host = np.zeros(({NK}, {NE}, 3), dtype=np.complex64)")
+    #print(f" UC_host = np.zeros(({NK}, {NE}, 3), dtype=np.complex64)")
     UC_host = np.zeros((NK, NE, 3), dtype=np.complex64)  # only comp 0,1 used
 
     for z in range(NE):
@@ -817,7 +817,7 @@ def dns_pao_host_init(S: DnsState):
     NK_full = S.NK_full
     NZ_full = S.NZ_full
 
-    print(f" UC_full_host = np.zeros(({NK_full}, {NZ_full}, 3), dtype=np.complex64)")
+    #print(f" UC_full_host = np.zeros(({NK_full}, {NZ_full}, 3), dtype=np.complex64)")
     UC_full_host = np.zeros((NK_full, NZ_full, 3), dtype=np.complex64)
     for z in range(NE):
         for x in range(ND2):
@@ -848,7 +848,7 @@ def dns_pao_host_init(S: DnsState):
     vfft_full_inverse_uc_full_to_ur_full(S)
 
     # Spectral vorticity from UC_full, like dnsCudaCalcom
-    print(f" dns_calcom_from_uc_full(S)")
+    #print(f" dns_calcom_from_uc_full(S)")
     dns_calcom_from_uc_full(S)
 
     # No history yet
