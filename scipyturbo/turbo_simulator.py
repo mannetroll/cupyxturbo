@@ -530,7 +530,6 @@ def create_dns_state(
     else:
         effective_backend = backend
 
-    print(f" effective:  {effective_backend}")
     Nbase = N
     NX = N
     NZ = N
@@ -567,7 +566,6 @@ def create_dns_state(
         seed_init=int(seed),
         fft_workers=5,
     )
-    print(f" workers (CPU): {state.fft_workers}")
 
     # Cache FFT module for the chosen backend (avoid per-call selection)
     state.fft = _fft_mod_for_state(state)
@@ -617,6 +615,9 @@ def create_dns_state(
             print("FFT plan_mod: None")
         else:
             print(f"FFT plan_mod: {plan_mod.__name__}")
+    else:
+        print(f" workers (CPU): {state.fft_workers}")
+    print(f" effective:  {effective_backend}")
 
     # PAO-style initialization (dnsCudaPaoHostInit)
     dns_pao_host_init(state)
