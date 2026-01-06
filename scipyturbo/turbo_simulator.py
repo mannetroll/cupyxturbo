@@ -564,7 +564,7 @@ def create_dns_state(
         visc=visc,
         cflnum=CFL,
         seed_init=int(seed),
-        fft_workers=5,
+        fft_workers=4,
     )
 
     # Cache FFT module for the chosen backend (avoid per-call selection)

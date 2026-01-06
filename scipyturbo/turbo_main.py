@@ -813,7 +813,7 @@ class MainWindow(QMainWindow):
         # 2) Compute new geometry
         new_w = self.image_label.pixmap().width() + 40
         new_h = self.image_label.pixmap().height() + 120
-        print("Resize to:", new_w, new_h)
+        #print("Resize to:", new_w, new_h)
 
         # 3) Allow the window to shrink (RESET constraints)
         self.setMinimumSize(0, 0)
