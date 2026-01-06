@@ -777,28 +777,28 @@ def dns_pao_host_init(S: DnsState):
     Ceps2 = 0.5 * Q2 * De / (EP * EP)
 
     # Print diagnostics exactly like the CUDA/Fortran version
-    print(f" N           ={N:12.0f}")
-    print(f" Reynolds n. ={float(S.Re):12.1g}")
-    print(f" K0          ={K0:12.0f}")
-    print(f" Energy      ={Q2:12.4f}")
-    print(f" WiWi        ={W2:12.4f}")
-    print(f" Epsilon     ={EP:12.4f}")
-    print(f" a11         ={a11:12.4f}")
-    print(f" e11         ={e11:12.4f}")
-    print(f" Time scale  ={tscale:12.4g}")
-    print(f" Kolmogorov  ={KOL:12.4f}")
-    print(f" Viscosity   ={visc:12.4f}")
-    print(f" dx/Kol.     ={dxKol:12.4f}")
-    print(f" 2Pi/Nlamda  ={NLAM:12.4f}")
-    print(f" 2Pi/Lux     ={Lux:12.4f}")
-    print(f" 2Pi/Luz     ={Luz:12.4f}")
-    print(f" 2Pi/Lwx     ={Lwx:12.4f}")
-    print(f" 2Pi/Lwz     ={Lwz:12.4f}")
-    print(f" Deps.       ={De:12.4f}")
-    print(f" Ceps2       ={Ceps2:12.4f}")
-    print(f" E1          ={float(E1):12.4f}")
-    print(f" E3          ={float(E3):12.4f}")
-    print(f" PAO seed    ={seed[0]:12d}")
+    print(f" N           = {N:.8g}")
+    print(f" Reynolds n. = {float(S.Re):.8g}")
+    print(f" K0          = {K0:.8g}")
+    print(f" Energy      = {Q2:.8g}")
+    print(f" WiWi        = {W2:.8g}")
+    #print(f" Epsilon     = {EP:.8g}")
+    #print(f" a11         = {a11:.8g}")
+    #print(f" e11         = {e11:.8g}")
+    print(f" Time scale  = {tscale:.8g}")
+    print(f" Kolmogorov  = {KOL:.8g}")
+    print(f" Viscosity   = {visc:.8g}")
+    print(f" dx/Kol.     = {dxKol:.8g}")
+    #print(f" 2Pi/Nlamda  = {NLAM:.8g}")
+    #print(f" 2Pi/Lux     = {Lux:.8g}")
+    #print(f" 2Pi/Luz     = {Luz:.8g}")
+    #print(f" 2Pi/Lwx     = {Lwx:.8g}")
+    #print(f" 2Pi/Lwz     = {Lwz:.8g}")
+    #print(f" Deps.       = {De:.8g}")
+    #print(f" Ceps2       = {Ceps2:.8g}")
+    #print(f" E1          = {float(E1):.8g}")
+    #print(f" E3          = {float(E3):.8g}")
+    print(f" PAO seed    = {seed[0]:.8g}")
 
     # ------------------------------------------------------------------
     # Scatter spectral UR → compact UC(kx,z,comp) buffer (current grid)
@@ -824,7 +824,7 @@ def dns_pao_host_init(S: DnsState):
             for c in range(2):
                 UC_full_host[x, z, c] = UR[x, z, c]
 
-    print(f" PAO INITIALIZATION OK. VISC={float(S.visc):.7g}")
+    print(f" PAO INITIALIZATION OK. VISC={float(S.visc):.8g}")
 
     # ------------------------------------------------------------------
     # Move alfa/gamma/UC/UC_full into DnsState (xp backend, SoA layout)
@@ -1628,9 +1628,9 @@ def run_dns(
         elap = t1 - t0
         fps = (STEPS / elap) if elap > 0 else 0.0
 
-        print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:8g}")
-        print(f" Final T={S.t:8g}  CN={S.cn:8g}  DT={S.dt:8g}")
-        print(f" FPS = {fps:7g}")
+        print(f" Elapsed CPU time for {STEPS} steps (s) = {elap:.8g}")
+        print(f" Final T={S.t:.8g}  CN={S.cn:.8g}  DT={S.dt:.8g}")
+        print(f" FPS = {fps:.8g}")
 
 def main():
     args = sys.argv[1:]
