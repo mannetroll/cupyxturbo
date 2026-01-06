@@ -964,7 +964,7 @@ class MainWindow(QMainWindow):
 
     def _update_status(self, t: float, it: int, fps: Optional[float], sig: Optional[float]) -> None:
         fps_str = f"{fps:5.2f}" if fps is not None else " N/A"
-        sig_str = f"{sig:3.1f}" if sig is not None else " N/A"
+        sig_str = f"{int(sig)}" if sig is not None else " N/A"
 
         # DPP = Display Pixel Percentage
         dpp = int(100 / self._display_scale())
@@ -975,7 +975,7 @@ class MainWindow(QMainWindow):
 
         txt = (
             f"   FPS: {fps_str} | σ: {sig_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
-            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:6g} | {_dt.datetime.now().strftime("%Y-%m-%d %H:%M")}"
+            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:.3g} | {_dt.datetime.now().strftime("%Y-%m-%d %H:%M")}"
         )
         self.status.showMessage(txt)
 
