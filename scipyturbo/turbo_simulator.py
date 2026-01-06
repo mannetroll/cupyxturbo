@@ -617,7 +617,6 @@ def create_dns_state(
             print(f"FFT plan_mod: {plan_mod.__name__}")
     else:
         print(f" workers (CPU): {state.fft_workers}")
-    print(f" effective:  {effective_backend}")
 
     # PAO-style initialization (dnsCudaPaoHostInit)
     dns_pao_host_init(state)
