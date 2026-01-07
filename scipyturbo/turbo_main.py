@@ -32,7 +32,6 @@ from scipyturbo.turbo_wrapper import DnsSimulator
 
 FUSION = "Fusion"
 
-
 # Simple helper: build a 256x3 uint8 LUT from color stops in 0..1
 # stops: list of (pos, (r,g,b)) with pos in [0,1], r,g,b in [0,255]
 def _make_lut_from_stops(stops, size: int = 256) -> np.ndarray:
@@ -327,6 +326,10 @@ def _setup_shortcuts(self):
         (self.update_combo.currentIndex() + 1) % self.update_combo.count()
     ))
 
+# Cache for k^2 grids:
+#   key: ("cpu", NZ, NX) or ("cuda", device_id, NZ, NX)
+#   val: K2 array on the corresponding backend (numpy or cupy)
+_K2_CACHE: dict[tuple, object] = {}
 
 class MainWindow(QMainWindow):
     def __init__(self, sim: DnsSimulator) -> None:
@@ -438,7 +441,7 @@ class MainWindow(QMainWindow):
         self.steps_combo = QComboBox()
         self.steps_combo.setToolTip("S: Max steps before reset/stop")
         self.steps_combo.addItems(["100", "1000", "2000", "5000", "10000", "25000", "50000", "1E5", "2E5", "3E5", "1E6", "1E7"])
-        self.steps_combo.setCurrentText("10000")
+        self.steps_combo.setCurrentText("50000")
 
         # Update selector
         self.update_combo = QComboBox()
@@ -932,6 +935,7 @@ class MainWindow(QMainWindow):
             pix = (1.0 + norm * 254.0).round().clip(1, 255).astype(np.uint8)
             f.write(pix.tobytes())
 
+    @staticmethod
     def _omega_grain_metrics(self, omega: np.ndarray) -> tuple[float, float, float]:
         """
         omega_grain_metrics:
@@ -975,6 +979,96 @@ class MainWindow(QMainWindow):
 
         return kmax, high_k_fraction, pal_over_ens_kmax2
 
+    @staticmethod
+    def _scalar_item(self, x) -> float:
+        # Works for numpy scalars and cupy 0-d arrays.
+        return float(x.item()) if hasattr(x, "item") else float(x)
+
+    def _get_k2_cached(self, NZ: int, NX: int):
+        if self.sim.state.backend == "cpu":
+            import scipy.fft
+
+            key = ("cpu", NZ, NX)
+            K2 = _K2_CACHE.get(key)
+            if K2 is None:
+                kx = scipy.fft.fftfreq(NX) * NX
+                kz = scipy.fft.fftfreq(NZ) * NZ
+                # float64 k^2 grid
+                K2 = (kz[:, None] * kz[:, None]) + (kx[None, :] * kx[None, :])
+                _K2_CACHE[key] = K2
+            return K2
+
+        else:
+            import cupy as cp
+
+            dev = int(cp.cuda.runtime.getDevice())
+            key = ("cuda", dev, NZ, NX)
+            K2 = _K2_CACHE.get(key)
+            if K2 is None:
+                kx = cp.fft.fftfreq(NX) * NX
+                kz = cp.fft.fftfreq(NZ) * NZ
+                # float64 k^2 grid on GPU
+                K2 = (kz[:, None] * kz[:, None]) + (kx[None, :] * kx[None, :])
+                _K2_CACHE[key] = K2
+            return K2
+
+    def omega_pal_over_ens_kmax2(self, omega) -> float:
+        """
+        Compute only:
+            palinstrophy_over_enstrophy_kmax2
+
+        pal_over_ens_kmax2 = (sum k^2 |W|^2) / (sum |W|^2 * kmax^2)
+        where W = FFT(omega - mean(omega)), and the k=0 mode is excluded from enstrophy.
+        """
+        if self.sim.state.backend == "cpu":
+            import scipy.fft
+
+            omega = np.asarray(omega, dtype=np.float64)
+            NZ, NX = omega.shape
+
+            a = omega - float(omega.mean())
+            W = scipy.fft.fft2(a)
+
+            P = W.real * W.real + W.imag * W.imag
+
+            K2 = self._get_k2_cached(NZ, NX)
+
+            total = float(P.sum() - P[0, 0])
+            if total <= 0.0:
+                return 0.0
+
+            kmax2 = float(K2.max())
+            if kmax2 <= 0.0:
+                return 0.0
+
+            palinstrophy = float((K2 * P).sum())
+            return palinstrophy / (total * kmax2)
+
+        else:
+            import cupy as cp
+
+            omega = cp.asarray(omega, dtype=cp.float64)
+            NZ, NX = omega.shape
+
+            a = omega - omega.mean()
+            W = cp.fft.fft2(a)
+
+            P = W.real * W.real + W.imag * W.imag
+
+            K2 = self._get_k2_cached(NZ, NX)
+
+            total = self._scalar_item(P.sum() - P[0, 0])
+            if total <= 0.0:
+                return 0.0
+
+            kmax2 = self._scalar_item(K2.max())
+            if kmax2 <= 0.0:
+                return 0.0
+
+            palinstrophy = self._scalar_item((K2 * P).sum())
+            return palinstrophy / (total * kmax2)
+
+
     def _update_image(self, pixels: np.ndarray) -> None:
         pixels = np.asarray(pixels, dtype=np.uint8)
         if pixels.ndim != 2:
@@ -992,7 +1086,7 @@ class MainWindow(QMainWindow):
         # --- grain metrics for stability (from ω field, full grid) ---
         try:
             omega = self._get_full_field("omega")
-            self.kmax, self.high_k_fraction, self.palinstrophy_over_enstrophy_kmax2 = self._omega_grain_metrics(omega)
+            self.palinstrophy_over_enstrophy_kmax2 = self.omega_pal_over_ens_kmax2(omega)
         except Exception:
             # keep last values if something goes wrong
             pass
@@ -1032,13 +1126,9 @@ class MainWindow(QMainWindow):
         dt = float(self.sim.state.dt)
 
         # Grain metrics row
-        if self.kmax is None or self.high_k_fraction is None or self.palinstrophy_over_enstrophy_kmax2 is None:
-            kmax_str = "N/A"
-            hk_str = "N/A"
+        if self.palinstrophy_over_enstrophy_kmax2 is None:
             pr_str = "N/A"
         else:
-            kmax_str = f"{self.kmax:6.1f}"
-            hk_str = f"{self.high_k_fraction:.2e}"
             pr_str = f"{10000*self.palinstrophy_over_enstrophy_kmax2:4.0f}"
 
         txt = (
