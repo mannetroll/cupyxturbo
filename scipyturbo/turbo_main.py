@@ -979,9 +979,8 @@ class MainWindow(QMainWindow):
 
         return kmax, high_k_fraction, pal_over_ens_kmax2
 
-    def _scalar_item(self, x) -> float:
-        _ = self
-        # Works for numpy scalars and cupy 0-d arrays.
+    @staticmethod
+    def _scalar_item(x) -> float:
         return float(x.item()) if hasattr(x, "item") else float(x)
 
     def _get_k2_cached(self, NZ: int, NX: int):
@@ -1088,7 +1087,9 @@ class MainWindow(QMainWindow):
             omega = self._get_full_field("omega")
             self.palinstrophy_over_enstrophy_kmax2 = self.omega_pal_over_ens_kmax2(omega)
         except Exception as e:
+            import traceback
             print(f"omega_pal_over_ens_kmax2: {e}")
+            traceback.print_exc()
             pass
 
         k = float(DISPLAY_NORM_K_STD)
