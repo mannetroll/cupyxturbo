@@ -979,8 +979,8 @@ class MainWindow(QMainWindow):
 
         return kmax, high_k_fraction, pal_over_ens_kmax2
 
-    @staticmethod
     def _scalar_item(self, x) -> float:
+        _ = self
         # Works for numpy scalars and cupy 0-d arrays.
         return float(x.item()) if hasattr(x, "item") else float(x)
 
