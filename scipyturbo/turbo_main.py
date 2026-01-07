@@ -524,7 +524,7 @@ class MainWindow(QMainWindow):
         self.variable_combo.setCurrentIndex(3)
 
         self._update_image(self.sim.get_frame_pixels())
-        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None, None)
+        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
 
         # set combobox data
         self.on_steps_changed(self.steps_combo.currentText())
@@ -705,13 +705,13 @@ class MainWindow(QMainWindow):
         self._update_image(pixels)
         t = self.sim.get_time()
         it = self.sim.get_iteration()
-        self._update_status(t, it, None, None)
+        self._update_status(t, it, None)
 
     def on_reset_clicked(self) -> None:
         self.on_stop_clicked()
         self.sim.reset_field()
         self._update_image(self.sim.get_frame_pixels())
-        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None, None)
+        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
         self.on_start_clicked()
 
     @staticmethod
@@ -847,6 +847,7 @@ class MainWindow(QMainWindow):
         invRe = 1.0 / self.sim.re
         visc = invRe if invRe > nu_min else nu_min
         self.sim.state.visc = float(visc)
+        self.on_step_clicked()
 
     def on_k0_changed(self, value: str) -> None:
         self.sim.k0 = float(value)
@@ -858,6 +859,8 @@ class MainWindow(QMainWindow):
     def on_cfl_changed(self, value: str) -> None:
         self.sim.cfl = float(value)
         self.sim.state.cflnum = self.sim.cfl
+        self.on_step_clicked()
+
 
     def on_steps_changed(self, value: str) -> None:
         self.sim.max_steps = int(float(value))
@@ -890,7 +893,7 @@ class MainWindow(QMainWindow):
             self._update_status(
                 self.sim.get_time(),
                 self.sim.get_iteration(),
-                fps, self.sig
+                fps,
             )
 
             self._status_update_counter = 0
@@ -1017,9 +1020,9 @@ class MainWindow(QMainWindow):
         pix = QPixmap.fromImage(qimg, Qt.ImageConversionFlag.NoFormatConversion)
         self.image_label.setPixmap(pix)
 
-    def _update_status(self, t: float, it: int, fps: Optional[float], sig: Optional[float]) -> None:
+    def _update_status(self, t: float, it: int, fps: Optional[float]) -> None:
         fps_str = f"{fps:5.2f}" if fps is not None else " N/A"
-        sig_str = f"{int(sig)}" if sig is not None else " N/A"
+        sig_str = f"{int(self.sig)}" if self.sig is not None else " N/A"
 
         # DPP = Display Pixel Percentage
         dpp = int(100 / self._display_scale())
