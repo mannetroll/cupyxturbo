@@ -1086,10 +1086,7 @@ class MainWindow(QMainWindow):
         try:
             omega = self._get_full_field("omega")
             self.palinstrophy_over_enstrophy_kmax2 = self.omega_pal_over_ens_kmax2(omega)
-        except Exception as e:
-            import traceback
-            print(f"omega_pal_over_ens_kmax2: {e}")
-            traceback.print_exc()
+        except Exception:
             pass
 
         k = float(DISPLAY_NORM_K_STD)
