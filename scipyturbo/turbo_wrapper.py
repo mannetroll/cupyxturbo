@@ -34,7 +34,7 @@ class DnsSimulator:
     def __init__(
         self,
         n: int = 384,
-        re: float = 10000.0,
+        re: float = 1000.0,
         k0: float = 15.0,
         cfl: float = 0.5,
         seed: int = 1,

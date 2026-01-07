@@ -77,7 +77,6 @@ try:
 except Exception:
     _nb = None
 
-
 def _pao_build_ur_and_stats_impl(
     N: int,
     NE: int,
@@ -237,7 +236,11 @@ def _pao_build_ur_and_stats_impl(
 
     Q2 = A1 + A2
     W2 = A3 + A4 + A5 + A6
-    visc = np.sqrt((Q2 * Q2) / (float(Re) * W2))
+    #visc = np.sqrt((Q2 * Q2) / (float(Re) * W2))
+    kc = np.float32(N) / np.float32(3.0)
+    nu_min = np.float32(0.2) / (kc * kc)  # = 0.2 * 9 / N**2
+    invRe = np.float32(1.0) / Re
+    visc = invRe if invRe > nu_min else nu_min
 
     # ------------------------------------------------------------------
     # Reshuffle (Fortran DO 1000 block)
@@ -544,10 +547,7 @@ def create_dns_state(
     NK = 3 * NX // 4 + 1
 
     NX_half = NX // 2
-
-    # Viscosity: in your original Fortran/CUDA this is computed more carefully
-    # from PAO/Calcom; here we keep a standard DNS-ish scaling ν ~ 1/Re.
-    visc = 1.0 / float(Re)
+    visc = 0
 
     state = DnsState(
         xp=xp,

@@ -338,6 +338,11 @@ class MainWindow(QMainWindow):
         self.sig: float = 20.0
         self.mu: float = 0.0
 
+        # --- grain metrics (omega) ---
+        self.kmax: Optional[float] = None
+        self.high_k_fraction: Optional[float] = None
+        self.palinstrophy_over_enstrophy_kmax2: Optional[float] = None
+
         # --- central image label ---
         self.image_label = QLabel()
         # allow shrinking when grid size becomes smaller
@@ -406,8 +411,7 @@ class MainWindow(QMainWindow):
         # Reynolds selector (Re)
         self.re_combo = QComboBox()
         self.re_combo.setToolTip("R: Reynolds Number (Re)")
-        self.re_combo.addItems(["10", "100", "1000", "10000", "100000", "1E6", "1E7", "1E8", "1E9", "1E10",
-                                "1E11", "1E12", "1E15", "1E18", "1E21", "1E23", "1E25"])
+        self.re_combo.addItems(["10", "100", "1000", "10000", "100000", "1E6", "1E7", "1E8", "1E9", "1E10", "1E11"])
         self.re_combo.setCurrentText(str(int(self.sim.re)))
 
         # K0 selector
@@ -463,12 +467,9 @@ class MainWindow(QMainWindow):
         # --- status bar ---
         self.status = QStatusBar()
         self.setStatusBar(self.status)
-
         mono = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         self.status.setFont(mono)
 
-        self.threads_label = QLabel(self)
-        self.status.addPermanentWidget(self.threads_label)
 
         # Timer-based simulation (no QThread)
         self.timer = QTimer(self)
@@ -699,7 +700,7 @@ class MainWindow(QMainWindow):
         self._update_run_buttons()
 
     def on_step_clicked(self) -> None:
-        self.sim.step()
+        self.sim.step(1)
         pixels = self.sim.get_frame_pixels()
         self._update_image(pixels)
         t = self.sim.get_time()
@@ -839,10 +840,13 @@ class MainWindow(QMainWindow):
 
     def on_re_changed(self, value: str) -> None:
         self.sim.re = float(value)
-        self.sim.reset_field()
-        self._sim_start_time = time.time()
-        self._sim_start_iter = self.sim.get_iteration()
-        self._update_image(self.sim.get_frame_pixels())
+        self.sim.state.Re = self.sim.re
+        N = int(self.sim.N)  # current grid size
+        kc = np.float32(N) / 3.0
+        nu_min = np.float32(0.2) / (kc * kc)  # = 0.2 * 9 / N**2
+        invRe = 1.0 / self.sim.re
+        visc = invRe if invRe > nu_min else nu_min
+        self.sim.state.visc = float(visc)
 
     def on_k0_changed(self, value: str) -> None:
         self.sim.k0 = float(value)
@@ -925,6 +929,49 @@ class MainWindow(QMainWindow):
             pix = (1.0 + norm * 254.0).round().clip(1, 255).astype(np.uint8)
             f.write(pix.tobytes())
 
+    def _omega_grain_metrics(self, omega: np.ndarray) -> tuple[float, float, float]:
+        """
+        omega_grain_metrics:
+          - kmax
+          - high_k_fraction (alpha=0.8)
+          - palinstrophy_over_enstrophy_kmax2
+        """
+        omega = np.asarray(omega, dtype=np.float64)
+        NZ, NX = omega.shape
+
+        a = omega - float(omega.mean())
+        W = np.fft.fft2(a)
+        P = np.abs(W) ** 2
+
+        # Wavenumber grid (integer modes)
+        kx = np.fft.fftfreq(NX) * NX
+        kz = np.fft.fftfreq(NZ) * NZ
+        KZ, KX = np.meshgrid(kz, kx, indexing="ij")
+        K2 = KX**2 + KZ**2
+
+        mask = K2 > 0.0
+        if not np.any(mask):
+            return 0.0, 0.0, 0.0
+
+        K = np.sqrt(K2, dtype=np.float64)
+        kmax = float(K[mask].max())
+
+        total = float(P[mask].sum())
+        if total <= 0.0 or kmax <= 0.0:
+            return kmax, 0.0, 0.0
+
+        # High-k fraction near cutoff
+        alpha = 0.8
+        high = float(P[mask & (K > alpha * kmax)].sum())
+        high_k_fraction = high / total
+
+        # Enstrophy ~ sum |W|^2, palinstrophy ~ sum k^2 |W|^2
+        enstrophy = total
+        palinstrophy = float((K2[mask] * P[mask]).sum())
+        pal_over_ens_kmax2 = palinstrophy / (enstrophy * (kmax**2))
+
+        return kmax, high_k_fraction, pal_over_ens_kmax2
+
     def _update_image(self, pixels: np.ndarray) -> None:
         pixels = np.asarray(pixels, dtype=np.uint8)
         if pixels.ndim != 2:
@@ -938,6 +985,14 @@ class MainWindow(QMainWindow):
         if self.sig < 1.0:
             self.on_stop_clicked()
             return
+
+        # --- grain metrics for stability (from ω field, full grid) ---
+        try:
+            omega = self._get_full_field("omega")
+            self.kmax, self.high_k_fraction, self.palinstrophy_over_enstrophy_kmax2 = self._omega_grain_metrics(omega)
+        except Exception:
+            # keep last values if something goes wrong
+            pass
 
         k = float(DISPLAY_NORM_K_STD)
         lo = self.mu - k * self.sig
@@ -973,11 +1028,51 @@ class MainWindow(QMainWindow):
         visc = float(self.sim.state.visc)
         dt = float(self.sim.state.dt)
 
+        # Grain metrics row
+        if self.kmax is None or self.high_k_fraction is None or self.palinstrophy_over_enstrophy_kmax2 is None:
+            kmax_str = "N/A"
+            hk_str = "N/A"
+            pr_str = "N/A"
+        else:
+            kmax_str = f"{self.kmax:6.1f}"
+            hk_str = f"{self.high_k_fraction:.2e}"
+            pr_str = f"{10000*self.palinstrophy_over_enstrophy_kmax2:4.0f}"
+
         txt = (
-            f"   FPS: {fps_str} | σ: {sig_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
-            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:.3g} | {_dt.datetime.now().strftime("%Y-%m-%d %H:%M")}"
+            f"  FPS: {fps_str} | pal/Zkmax^2: {pr_str} | σ: {sig_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
+            f"| {elapsed_min:4.1f} min | Visc: {visc:.3g} | {_dt.datetime.now().strftime('%Y-%m-%d %H:%M')}"
         )
         self.status.showMessage(txt)
+
+    def adapt_visc(self) -> None:
+        # target in the "raw" metric (not *10000)
+        target = 0.005
+        hi = target * 1.10
+        lo = target * 0.90
+
+        p = self.palinstrophy_over_enstrophy_kmax2
+        if p is None:
+            return
+
+        nu = float(self.sim.state.visc)
+
+        if p > hi:
+            # too much small-scale crowding: add dissipation
+            nu *= 1.25
+        elif p < lo:
+            # safe: try less dissipation (higher Re)
+            nu *= 0.98
+
+        # also enforce your resolution floor nu_min(N)
+        N = int(self.sim.N)
+        kc = float(N) / 3.0
+        nu_min = 0.2 / (kc * kc)
+
+        if nu < nu_min:
+            nu = nu_min
+
+        self.sim.state.visc = nu
+        self.sim.state.Re = 1.0 / nu  # optional "effective Re" display, if you want
 
     # ------------------------------------------------------------------
     def keyPressEvent(self, event) -> None:
