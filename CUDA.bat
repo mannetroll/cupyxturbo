@@ -1,6 +1,7 @@
 @echo off
 setlocal
 
+REM uv sync --extra cuda
 REM --- Find drive that contains Briefcase\v13.1\bin\nvcc.exe ---
 for %%D in (C D E F G H I J K L M N O P Q R S T U V W X Y Z) do (
   if exist "%%D:\Briefcase\v13.1\bin\nvcc.exe" (
