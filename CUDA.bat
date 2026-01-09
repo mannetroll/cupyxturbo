@@ -17,4 +17,4 @@ set "CUDA_PATH=%DRV%:\Briefcase\v13.1"
 set "PATH=%CUDA_PATH%\bin;%CUDA_PATH%\bin\x64;%PATH%"
 
 REM --- Run entrypoint (no uv required) ---
-"%~dp0\.venv\Scripts\python.exe" -m palinstrophy.turbo_main
+"%~dp0\.venv\Scripts\python.exe" -m scipyturbo.turbo_main

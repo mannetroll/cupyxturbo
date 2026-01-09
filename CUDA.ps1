@@ -7,4 +7,4 @@ $env:CUDA_PATH = "$drv`:\Briefcase\v13.1"
 $env:Path = "$env:CUDA_PATH\bin;$env:Path"
 $env:Path = "$env:CUDA_PATH\bin\x64;$env:Path"
 
-.\.venv\Scripts\python.exe -m palinstrophy.turbo_main
+.\.venv\Scripts\python.exe -m scipyturbo.turbo_main
