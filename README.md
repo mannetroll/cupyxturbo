@@ -174,13 +174,13 @@ For a terminal-only summary:
 ```
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
 $ uv cache clean mannetroll-cupyxturbo
-$ uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.4 -- turbulence
+$ uv run --python 3.13 --with mannetroll-cupyxturbo==0.1.5 -- turbulence
 ```
 
 ## one-liner GPU/CuPy
 
 ```
-$ uv run --python 3.13 --with mannetroll-cupyxturbo[cuda]==0.1.4 -- turbulence
+$ uv run --python 3.13 --with mannetroll-cupyxturbo[cuda]==0.1.5 -- turbulence
 ```
 
 ## License
