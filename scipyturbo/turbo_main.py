@@ -5,7 +5,7 @@ import os
 import sys
 import time
 import datetime as _dt
-from typing import Optional
+from typing import Optional, Literal, cast
 
 from pathlib import Path
 from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths
@@ -332,11 +332,16 @@ def _setup_shortcuts(self):
 _K2_CACHE: dict[tuple, object] = {}
 
 class MainWindow(QMainWindow):
-    def __init__(self, sim: DnsSimulator) -> None:
+    def __init__(self, sim: DnsSimulator, steps: str, update: str, iterations: int) -> None:
         super().__init__()
 
         self.sim = sim
+        self.update = update
+        self.steps = steps
+        self.iterations = iterations
         self.current_cmap_name = DEFAULT_CMAP_NAME
+        self._status_update_counter = 0
+        self._update_intervall = update
 
         self.sig: float = 20.0
         self.mu: float = 0.0
@@ -535,16 +540,6 @@ class MainWindow(QMainWindow):
         self.on_start_clicked()  # auto-start simulation immediately
 
     # ------------------------------------------------------------------
-
-    @staticmethod
-    def move_widgets(src_layout, dst_layout):
-        """Move only widgets from src_layout into dst_layout (ignore spacers)."""
-        while src_layout.count() > 0:
-            item = src_layout.takeAt(0)
-            w = item.widget()
-            if w is not None:
-                dst_layout.addWidget(w)
-
     def _build_layout(self):
         """Rebuild the control layout based on the current N."""
         old = self.centralWidget()
@@ -553,12 +548,12 @@ class MainWindow(QMainWindow):
 
         central = QWidget()
         main = QVBoxLayout(central)
-        main.setSpacing(5)
+        main.setSpacing(3)
         main.addWidget(self.image_label)
 
         # First row
         row1 = QHBoxLayout()
-        row1.setContentsMargins(20, 0, 0, 0)
+        row1.setContentsMargins(10, 0, 0, 0)
         row1.setAlignment(Qt.AlignmentFlag.AlignLeft)  # pack to left
         row1.addWidget(self.start_button)
         row1.addWidget(self.stop_button)
@@ -717,6 +712,98 @@ class MainWindow(QMainWindow):
         self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
         self.on_start_clicked()
 
+    def _save_omega_radial_spectrum(self, omega: np.ndarray, out_png: str) -> None:
+        """
+        Save a log-log radially averaged 2D FFT power spectrum (approx) as a PNG figure.
+
+        - x-axis: normalized radius  k / k_Nyquist  where k_Nyquist = N/2 (axis Nyquist)
+          => max radius reaches ~sqrt(2) at the corners.
+        - y-axis: radially averaged power (mean within radial bins)
+        """
+        import matplotlib.pyplot as plt
+
+        a = np.asarray(omega, dtype=np.float64)
+        if a.ndim != 2:
+            return
+
+        NZ, NX = a.shape
+        if NZ < 2 or NX < 2:
+            return
+
+        # Remove mean (DC)
+        a = a - float(a.mean())
+
+        # 2D FFT power
+        W = np.fft.fft2(a)
+        P = (W.real * W.real + W.imag * W.imag)  # |W|^2
+
+        # Frequency grids in "integer mode" units
+        kx = np.fft.fftfreq(NX) * NX
+        kz = np.fft.fftfreq(NZ) * NZ
+        KZ, KX = np.meshgrid(kz, kx, indexing="ij")
+
+        # Normalized radial wavenumber: k / (N/2)
+        # Use axis Nyquist based on the smaller dimension (robust if NZ!=NX)
+        N = float(min(NX, NZ))
+        k_nyq = 0.5 * N
+        R = np.sqrt(KX * KX + KZ * KZ) / k_nyq
+
+        # Exclude the DC bin (R==0) from the radial statistics
+        mask = R > 0.0
+        r = R[mask].ravel()
+        p = P[mask].ravel()
+
+        # Radial binning up to r_max = sqrt(2) (corner)
+        r_max = np.sqrt(2.0)
+        nbins = max(32, int(2 * min(NX, NZ)))  # reasonably smooth curve
+        # Map r in (0..r_max] -> bin index [0..nbins-1]
+        idx = np.floor((r / r_max) * nbins).astype(np.int64)
+        idx = np.clip(idx, 0, nbins - 1)
+
+        # Mean power per radial bin
+        psum = np.bincount(idx, weights=p, minlength=nbins)
+        cnt = np.bincount(idx, minlength=nbins).astype(np.float64)
+        good = cnt > 0.0
+        pmean = np.zeros(nbins, dtype=np.float64)
+        pmean[good] = psum[good] / cnt[good]
+
+        # Bin centers in normalized radius
+        r_edges = np.linspace(0.0, r_max, nbins + 1)
+        r_centers = 0.5 * (r_edges[:-1] + r_edges[1:])
+
+        # Plot (match “last time” style)
+        fig = plt.figure(figsize=(8, 5))
+        ax = fig.add_subplot(1, 1, 1)
+        ax.loglog(r_centers[good], pmean[good])
+        ax.set_ylim(bottom=1)
+        ax.set_title("Omega image: radially averaged FFT power spectrum (approx)")
+        ax.set_xlabel("normalized radius  k / k_Nyquist  (from image)")
+        ax.set_ylabel("radially averaged power")
+        k0_norm = (2.0 * float(self.sim.k0)) / float(self.sim.N)
+        ax.axvline(k0_norm)
+
+        # Metadata annotation (force black so it won't be blue)
+        # Keep it short + useful
+        meta = (
+            f"N={min(NX, NZ)}  Re={self.sim.re:g}  visc={float(self.sim.state.visc):.3g}\n"
+            f"t={float(self.sim.get_time()):.6g}  it={int(self.sim.get_iteration())}\n"
+            f"K0={self.sim.k0:g}\n"
+            f"pal/Zkmax^2={self.palinstrophy_over_enstrophy_kmax2:.2e}"
+        )
+        ax.text(
+            0.02, 0.02, meta,
+            transform=ax.transAxes,
+            ha="left", va="bottom",
+            fontsize=12,
+            color="black",
+            bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="black", alpha=0.85),
+        )
+
+        fig.tight_layout()
+        fig.savefig(out_png)
+        plt.close(fig)
+
+
     @staticmethod
     def sci_no_plus(x, decimals=0):
         x = float(x)
@@ -727,11 +814,11 @@ class MainWindow(QMainWindow):
         # --- Build the default folder name ---
         N = self.sim.N
         Re = self.sim.re
-        K0 = self.sim.k0
+        K0 = int(self.sim.k0)
         CFL = self.sim.cfl
         STEPS = self.sim.get_iteration()
-
-        folder = f"cupyxturbo_{N}_{self.sci_no_plus(Re)}_{K0}_{CFL}_{STEPS}"
+        suffix = f"{N}_{K0}_{self.sci_no_plus(Re)}_{CFL}_{STEPS}"
+        folder = f"cupyxturbo_{suffix}"
 
         # Default root = Desktop
         desktop = QStandardPaths.writableLocation(
@@ -756,6 +843,9 @@ class MainWindow(QMainWindow):
         else:
             return
 
+        self.dump_to_folder(base_dir, folder, suffix)
+
+    def dump_to_folder(self, base_dir: str, folder: str, suffix: str):
         # Build final path
         folder_path = os.path.join(base_dir, folder)
         os.makedirs(folder_path, exist_ok=True)
@@ -764,7 +854,9 @@ class MainWindow(QMainWindow):
         self._dump_pgm_full(self._get_full_field("u"), os.path.join(folder_path, "u_velocity.pgm"))
         self._dump_pgm_full(self._get_full_field("v"), os.path.join(folder_path, "v_velocity.pgm"))
         self._dump_pgm_full(self._get_full_field("kinetic"), os.path.join(folder_path, "kinetic.pgm"))
-        self._dump_pgm_full(self._get_full_field("omega"), os.path.join(folder_path, "omega.pgm"))
+        omega = self._get_full_field("omega")
+        self._dump_pgm_full(omega, os.path.join(folder_path, "omega.pgm"))
+        self._save_omega_radial_spectrum(omega, os.path.join(folder_path, f"omega_spectrum_{suffix}.png"))
         print("[SAVE] Completed.")
 
     def on_save_clicked(self) -> None:
@@ -835,12 +927,6 @@ class MainWindow(QMainWindow):
         self._sim_start_time = time.time()
         self._sim_start_iter = self.sim.get_iteration()
 
-    def _recenter_window(self):
-        screen = QApplication.primaryScreen().availableGeometry()
-        g = self.geometry()
-        g.moveCenter(screen.center())
-        self.move(g.topLeft())
-
     def on_re_changed(self, value: str) -> None:
         self.sim.re = float(value)
         self.sim.state.Re = self.sim.re
@@ -909,7 +995,35 @@ class MainWindow(QMainWindow):
                 self._sim_start_iter = self.sim.get_iteration()
             else:
                 self.timer.stop()
-                print("Max steps reached — simulation stopped (Auto-Reset OFF).")
+                print(" Max steps reached, simulation stopped (Auto-Reset OFF)")
+
+        if self.sim.get_iteration() >= self.iterations:
+            print(f" Max iteration reached: {self.iterations}, exiting...")
+            # --- Build the default folder name ---
+            N = self.sim.N
+            Re = self.sim.state.Re
+            K0 = int(self.sim.k0)
+            CFL = self.sim.cfl
+            STEPS = self.sim.get_iteration()
+            VISC = self.sim.state.visc
+            PALIN = int(10000*self.palinstrophy_over_enstrophy_kmax2)
+            SIG = int(self.sig)
+            TIME = self.sim.state.t
+            # ---- FPS from simulation start ----
+            elapsed = time.time() - self._sim_start_time
+            steps = self.sim.get_iteration() - self._sim_start_iter
+            MINUTES = elapsed / 60.0
+            FPS = steps / elapsed
+            print("N, K0, Re, CFL, VISC, STEPS, PALIN, SIG, TIME, MINUTES, FPS")
+            print(f"{N}, {K0}, {Re:.4e}, {CFL}, {VISC:.4e}, {STEPS}, {PALIN}, {SIG}, {TIME:.2e}, {MINUTES:.2f}, {FPS:.1f}")
+            suffix = f"{N}_{K0}_{self.sci_no_plus(Re)}_{CFL}_{STEPS}"
+            folder = f"simulations/palinstrophy_{suffix}"
+            # Default root = Desktop
+            desktop = QStandardPaths.writableLocation(
+                QStandardPaths.StandardLocation.DesktopLocation
+            )
+            self.dump_to_folder(desktop, folder, suffix)
+            QApplication.quit()
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -935,127 +1049,32 @@ class MainWindow(QMainWindow):
             pix = (1.0 + norm * 254.0).round().clip(1, 255).astype(np.uint8)
             f.write(pix.tobytes())
 
-    @staticmethod
-    def _omega_grain_metrics(self, omega: np.ndarray) -> tuple[float, float, float]:
-        """
-        omega_grain_metrics:
-          - kmax
-          - high_k_fraction (alpha=0.8)
-          - palinstrophy_over_enstrophy_kmax2
-        """
-        omega = np.asarray(omega, dtype=np.float64)
-        NZ, NX = omega.shape
 
-        a = omega - float(omega.mean())
-        W = np.fft.fft2(a)
-        P = np.abs(W) ** 2
-
-        # Wavenumber grid (integer modes)
-        kx = np.fft.fftfreq(NX) * NX
-        kz = np.fft.fftfreq(NZ) * NZ
-        KZ, KX = np.meshgrid(kz, kx, indexing="ij")
-        K2 = KX**2 + KZ**2
-
-        mask = K2 > 0.0
-        if not np.any(mask):
-            return 0.0, 0.0, 0.0
-
-        K = np.sqrt(K2, dtype=np.float64)
-        kmax = float(K[mask].max())
-
-        total = float(P[mask].sum())
-        if total <= 0.0 or kmax <= 0.0:
-            return kmax, 0.0, 0.0
-
-        # High-k fraction near cutoff
-        alpha = 0.8
-        high = float(P[mask & (K > alpha * kmax)].sum())
-        high_k_fraction = high / total
-
-        # Enstrophy ~ sum |W|^2, palinstrophy ~ sum k^2 |W|^2
-        enstrophy = total
-        palinstrophy = float((K2[mask] * P[mask]).sum())
-        pal_over_ens_kmax2 = palinstrophy / (enstrophy * (kmax**2))
-
-        return kmax, high_k_fraction, pal_over_ens_kmax2
 
     @staticmethod
     def _scalar_item(x) -> float:
         return float(x.item()) if hasattr(x, "item") else float(x)
 
-    def _get_k2_cached(self, NZ: int, NX: int):
-        if self.sim.state.backend == "cpu":
-            import scipy.fft
-
-            key = ("cpu", NZ, NX)
-            K2 = _K2_CACHE.get(key)
-            if K2 is None:
-                kx = scipy.fft.fftfreq(NX) * NX
-                kz = scipy.fft.fftfreq(NZ) * NZ
-                # float64 k^2 grid
-                K2 = (kz[:, None] * kz[:, None]) + (kx[None, :] * kx[None, :])
-                _K2_CACHE[key] = K2
-            return K2
-
-        else:
-            import cupy as cp
-
-            dev = int(cp.cuda.runtime.getDevice())
-            key = ("cuda", dev, NZ, NX)
-            K2 = _K2_CACHE.get(key)
-            if K2 is None:
-                kx = cp.fft.fftfreq(NX) * NX
-                kz = cp.fft.fftfreq(NZ) * NZ
-                # float64 k^2 grid on GPU
-                K2 = (kz[:, None] * kz[:, None]) + (kx[None, :] * kx[None, :])
-                _K2_CACHE[key] = K2
-            return K2
-
-    def omega_pal_over_ens_kmax2(self, omega) -> float:
+    def pal_over_ens_kmax2(self) -> float:
         """
-        Compute only:
-            palinstrophy_over_enstrophy_kmax2
+        Fast path for the palinstrophy/enstrophy metric using the *spectral* vorticity band.
 
-        pal_over_ens_kmax2 = (sum k^2 |W|^2) / (sum |W|^2 * kmax^2)
-        where W = FFT(omega - mean(omega)), and the k=0 mode is excluded from enstrophy.
+        Uses S.om2 (rFFT in x, full FFT in z) and S.step3_K2 (k^2 on the same grid),
+        so we avoid ω→physical and a full FFT per rendered frame.
+
+        The rFFT half-spectrum is expanded via weights:
+          • kx=0 and kx=NX/2 columns counted once
+          • all interior kx columns counted twice (conjugate symmetry)
         """
-        if self.sim.state.backend == "cpu":
-            import scipy.fft
+        S = self.sim.state
 
-            omega = np.asarray(omega, dtype=np.float64)
-            NZ, NX = omega.shape
+        band = S.om2
+        P = band.real * band.real + band.imag * band.imag  # |W|^2 on the (NZ, NX_half) rFFT grid
+        K2 = S.step3_K2  # k^2 on the same grid
 
-            a = omega - float(omega.mean())
-            W = scipy.fft.fft2(a)
+        NX_half = int(P.shape[1])
 
-            P = W.real * W.real + W.imag * W.imag
-
-            K2 = self._get_k2_cached(NZ, NX)
-
-            total = float(P.sum() - P[0, 0])
-            if total <= 0.0:
-                return 0.0
-
-            kmax2 = float(K2.max())
-            if kmax2 <= 0.0:
-                return 0.0
-
-            palinstrophy = float((K2 * P).sum())
-            return palinstrophy / (total * kmax2)
-
-        else:
-            import cupy as cp
-
-            omega = cp.asarray(omega, dtype=cp.float64)
-            NZ, NX = omega.shape
-
-            a = omega - omega.mean()
-            W = cp.fft.fft2(a)
-
-            P = W.real * W.real + W.imag * W.imag
-
-            K2 = self._get_k2_cached(NZ, NX)
-
+        if NX_half == 1:
             total = self._scalar_item(P.sum() - P[0, 0])
             if total <= 0.0:
                 return 0.0
@@ -1067,6 +1086,26 @@ class MainWindow(QMainWindow):
             palinstrophy = self._scalar_item((K2 * P).sum())
             return palinstrophy / (total * kmax2)
 
+        # Full-spectrum weighted sums from the rFFT half-spectrum
+        edge = P[:, 0].sum() + P[:, -1].sum()
+        mid = P[:, 1:-1].sum() if NX_half > 2 else 0.0
+        total_full = edge + 2.0 * mid
+
+        # Exclude k=0 mode (mean ω)
+        total = self._scalar_item(total_full - P[0, 0])
+        if total <= 0.0:
+            return 0.0
+
+        kmax2 = self._scalar_item(K2.max())
+        if kmax2 <= 0.0:
+            return 0.0
+
+        edge_p = (K2[:, 0] * P[:, 0]).sum() + (K2[:, -1] * P[:, -1]).sum()
+        mid_p = (K2[:, 1:-1] * P[:, 1:-1]).sum() if NX_half > 2 else 0.0
+        pal_full = edge_p + 2.0 * mid_p
+
+        palinstrophy = self._scalar_item(pal_full)
+        return palinstrophy / (total * kmax2)
 
     def _update_image(self, pixels: np.ndarray) -> None:
         pixels = np.asarray(pixels, dtype=np.uint8)
@@ -1083,11 +1122,7 @@ class MainWindow(QMainWindow):
             return
 
         # --- grain metrics for stability (from ω field, full grid) ---
-        try:
-            omega = self._get_full_field("omega")
-            self.palinstrophy_over_enstrophy_kmax2 = self.omega_pal_over_ens_kmax2(omega)
-        except Exception:
-            pass
+        self.palinstrophy_over_enstrophy_kmax2 = self.pal_over_ens_kmax2()
 
         k = float(DISPLAY_NORM_K_STD)
         lo = self.mu - k * self.sig
@@ -1127,43 +1162,13 @@ class MainWindow(QMainWindow):
         if self.palinstrophy_over_enstrophy_kmax2 is None:
             pr_str = "N/A"
         else:
-            pr_str = f"{10000*self.palinstrophy_over_enstrophy_kmax2:4.0f}"
+            pr_str = f"{10000*self.palinstrophy_over_enstrophy_kmax2:3.0f}"
 
         txt = (
-            f"  FPS: {fps_str} | pal/Zkmax^2: {pr_str} | σ: {sig_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
-            f"| {elapsed_min:4.1f} min | Visc: {visc:.3g} | {_dt.datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            f"  FPS: {fps_str} | pal/Zkmax²: {pr_str} | σ: {sig_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
+            f"| {elapsed_min:4.1f} min | Visc: {visc:8.3g} | {_dt.datetime.now().strftime('%Y-%m-%d %H:%M')}"
         )
         self.status.showMessage(txt)
-
-    def adapt_visc(self) -> None:
-        # target in the "raw" metric (not *10000)
-        target = 0.005
-        hi = target * 1.10
-        lo = target * 0.90
-
-        p = self.palinstrophy_over_enstrophy_kmax2
-        if p is None:
-            return
-
-        nu = float(self.sim.state.visc)
-
-        if p > hi:
-            # too much small-scale crowding: add dissipation
-            nu *= 1.25
-        elif p < lo:
-            # safe: try less dissipation (higher Re)
-            nu *= 0.98
-
-        # also enforce your resolution floor nu_min(N)
-        N = int(self.sim.N)
-        kc = float(N) / 3.0
-        nu_min = 0.2 / (kc * kc)
-
-        if nu < nu_min:
-            nu = nu_min
-
-        self.sim.state.visc = nu
-        self.sim.state.Re = 1.0 / nu  # optional "effective Re" display, if you want
 
     # ------------------------------------------------------------------
     def keyPressEvent(self, event) -> None:
@@ -1244,16 +1249,42 @@ class MainWindow(QMainWindow):
 
 
 # ----------------------------------------------------------------------
+Backend = Literal["cpu", "gpu", "auto"]
 def main() -> None:
-    app = QApplication(sys.argv)
+    args = sys.argv[1:]
 
-    icon_path = Path(__file__).with_name("scipyturbo.icns")
+    # Decide backend early so we can choose a sensible default N
+    backend_str = args[5].lower() if len(args) > 5 else "auto"
+    if backend_str not in ("cpu", "gpu", "auto"):
+        backend_str = "auto"
+    backend: Backend = cast(Backend, backend_str)
+
+    # Default N depends on effective backend:
+    if backend == "cpu":
+        default_N = 512
+    elif backend == "gpu":
+        default_N = 2048
+    else:
+        import importlib.util
+        default_N = 2048 if importlib.util.find_spec("cupy") is not None else 512
+
+    N = int(args[0]) if len(args) > 0 else default_N
+    K0 = float(args[1]) if len(args) > 1 else 15
+    Re = float(args[2]) if len(args) > 2 else 10000
+    STEPS = args[3] if len(args) > 3 else "50000"
+    CFL = float(args[4]) if len(args) > 4 else 0.25
+
+    UPDATE = args[6] if len(args) > 6 else "5"
+    ITERATIONS = int(args[7]) if len(args) > 7 else 10**9
+
+    app = QApplication(sys.argv)
+    icon_path = Path(__file__).with_name("palinstrophy.icns")
     icon = QIcon(str(icon_path))
     app.setWindowIcon(icon)
 
-    sim = DnsSimulator(n=256)
+    sim = DnsSimulator(n=N, re=Re, k0=K0, cfl=CFL, backend=backend)
     sim.step(1)
-    window = MainWindow(sim)
+    window = MainWindow(sim, STEPS, UPDATE, ITERATIONS)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()
     g.moveCenter(screen.center())

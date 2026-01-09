@@ -237,10 +237,7 @@ def _pao_build_ur_and_stats_impl(
     Q2 = A1 + A2
     W2 = A3 + A4 + A5 + A6
     #visc = np.sqrt((Q2 * Q2) / (float(Re) * W2))
-    kc = np.float32(N) / np.float32(3.0)
-    nu_min = np.float32(0.2) / (kc * kc)  # = 0.2 * 9 / N**2
-    invRe = np.float32(1.0) / Re
-    visc = invRe if invRe > nu_min else nu_min
+    visc = 1.0 / float(Re)
 
     # ------------------------------------------------------------------
     # Reshuffle (Fortran DO 1000 block)
@@ -702,7 +699,7 @@ def dns_pao_host_init(S: DnsState):
     NORM = PI * K0 * K0
 
     print("--- INITIALIZING SciPy/CuPy ---", _dt.datetime.now().strftime("%Y-%m-%d %H:%M"))
-    print(f" N={N}, K0={int(K0)}, Re={S.Re}")
+    print(f" N={N}, K0={int(K0)}, Re={S.Re:.4e}")
 
     # ------------------------------------------------------------------
     # Build ALFA(N/2) and GAMMA(N)  (Fortran DALFA, DGAMMA, E1, E3)

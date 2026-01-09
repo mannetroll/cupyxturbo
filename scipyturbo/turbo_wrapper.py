@@ -1,8 +1,7 @@
 # turbo_wrapper.py
 from pathlib import Path
 from time import perf_counter
-from typing import Union
-
+from typing import Union, Literal
 import numpy as np
 import math
 import os
@@ -33,10 +32,11 @@ class DnsSimulator:
 
     def __init__(
         self,
-        n: int = 384,
+        n: int = 512,
         re: float = 1000.0,
         k0: float = 15.0,
-        cfl: float = 0.5,
+        cfl: float = 0.25,
+        backend: Literal["cpu", "gpu", "auto"] = "auto",
         seed: int = 1,
     ):
         self.N = int(n)
@@ -45,6 +45,7 @@ class DnsSimulator:
         self.k0 = float(k0)
         self.cfl = float(cfl)
         self.seed = int(seed)
+        self.backend = backend
         self.max_steps = 5000
 
         # --- ONLY: max SciPy FFT workers on CPU ---
@@ -62,7 +63,7 @@ class DnsSimulator:
                 Re=self.re,
                 K0=self.k0,
                 CFL=self.cfl,
-                backend="auto",  # GUI uses the CPU/NumPy/GPU/CuPy backend
+                backend=self.backend,
                 seed=self.seed,
             )
 
