@@ -5,6 +5,7 @@ from typing import Union, Literal
 import numpy as np
 import math
 import os
+import random
 from scipyturbo import turbo_simulator as dns_all
 from PIL import Image
 
@@ -37,14 +38,14 @@ class DnsSimulator:
         k0: float = 15.0,
         cfl: float = 0.25,
         backend: Literal["cpu", "gpu", "auto"] = "auto",
-        seed: int = 1,
     ):
         self.N = int(n)
         self.m = 3 * self.N
         self.re = float(re)
         self.k0 = float(k0)
         self.cfl = float(cfl)
-        self.seed = int(seed)
+        random.seed()
+        self.seed = random.randint(1, 1000)
         self.backend = backend
         self.max_steps = 5000
 
