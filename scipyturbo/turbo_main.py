@@ -1261,16 +1261,16 @@ def main() -> None:
 
     # Default N depends on effective backend:
     if backend == "cpu":
-        default_N = 512
+        default_N = 256
     elif backend == "gpu":
-        default_N = 2048
+        default_N = 1024
     else:
         import importlib.util
-        default_N = 2048 if importlib.util.find_spec("cupy") is not None else 512
+        default_N = 2048 if importlib.util.find_spec("cupy") is not None else 256
 
     N = int(args[0]) if len(args) > 0 else default_N
     K0 = float(args[1]) if len(args) > 1 else 15
-    Re = float(args[2]) if len(args) > 2 else 10000
+    Re = float(args[2]) if len(args) > 2 else 1000
     STEPS = args[3] if len(args) > 3 else "50000"
     CFL = float(args[4]) if len(args) > 4 else 0.25
 
