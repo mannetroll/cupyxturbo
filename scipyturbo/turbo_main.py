@@ -571,6 +571,7 @@ class MainWindow(QMainWindow):
         row1.addWidget(self.auto_reset_checkbox)
         row1.addSpacing(10)
         row1.addWidget(self.update_combo)
+        row1.addStretch(1)		
         main.addLayout(row1)
 
         self.setCentralWidget(central)
