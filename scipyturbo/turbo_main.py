@@ -1266,7 +1266,7 @@ def main() -> None:
         default_N = 1024
     else:
         import importlib.util
-        default_N = 2048 if importlib.util.find_spec("cupy") is not None else 256
+        default_N = 1024 if importlib.util.find_spec("cupy") is not None else 256
 
     N = int(args[0]) if len(args) > 0 else default_N
     K0 = float(args[1]) if len(args) > 1 else 15
