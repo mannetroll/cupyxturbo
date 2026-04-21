@@ -31,6 +31,7 @@ turbulence = "scipyturbo.turbo_main:main"
 sim = "scipyturbo.turbo_simulator:main"
 fps = "scipyturbo.turbo_simulator_fps:main"
 cufft = "scipyturbo.turbo_simulator_cufft:main"
+opt = "scipyturbo.turbo_simulator_opt:main"
 
 # Package discovery
 [tool.setuptools.packages.find]
