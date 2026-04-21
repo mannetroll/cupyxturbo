@@ -1,0 +1,1533 @@
+ Checking CuPy...
+OS                           : Windows-10-10.0.19045-SP0
+Python Version               : 3.13.11
+CuPy Version                 : 13.6.0
+CuPy Platform                : NVIDIA CUDA
+NumPy Version                : 2.4.0
+SciPy Version                : 1.16.3
+Cython Build Version         : 3.0.12
+Cython Runtime Version       : None
+CUDA Root                    : C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1
+nvcc PATH                    : C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin\nvcc.EXE
+CUDA Build Version           : 13000
+CUDA Driver Version          : 13010
+CUDA Runtime Version         : 13000 (linked to CuPy) / 13010 (locally installed)
+CUDA Extra Include Dirs      : []
+cuBLAS Version               : (available)
+cuFFT Version                : 12100
+cuRAND Version               : 10401
+cuSOLVER Version             : (12, 0, 7)
+cuSPARSE Version             : (available)
+NVRTC Version                : (13, 1)
+Thrust Version               : 200800
+CUB Build Version            : 200800
+Jitify Build Version         : 1a0ca0e
+cuDNN Build Version          : None
+cuDNN Version                : None
+NCCL Build Version           : None
+NCCL Runtime Version         : None
+cuTENSOR Version             : None
+cuSPARSELt Build Version     : None
+Device 0 Name                : NVIDIA GeForce RTX 3090
+Device 0 Compute Capability  : 86
+Device 0 PCI Bus ID          : 0000:01:00.0
+--- RUN DNS ---
+ N   = 1024
+ Re  = 10000.0
+ K0  = 10.0
+ Steps = 10001
+ CFL  = 0.75
+ requested = gpu
+ backend:  gpu
+ workers (CPU): 5
+FFT plan_mod: cupyx.scipy.fft
+--- INITIALIZING SciPy/CuPy --- 2026-01-04 13:36
+ N=1024, K0=10, Re=10000.0
+Generate isotropic random spectrum...
+z=0/1024
+z=1000/1024
+Compute averages A(1..7), E110, Q2, W2, VISC...
+ N           =        1024
+ Reynolds n. =       1e+04
+ K0          =          10
+ Energy      =      0.9968
+ WiWi        =    100.0000
+ Epsilon     =      0.0997
+ a11         =     -0.0000
+ e11         =     -0.0000
+ Time scale  =           5
+ Kolmogorov  =      0.0100
+ Viscosity   =      0.0010
+ dx/Kol.     =      0.6146
+ 2Pi/Nlamda  =     18.7245
+ 2Pi/Lux     =     22.2496
+ 2Pi/Luz     =     38.5380
+ 2Pi/Lwx     =     38.5380
+ 2Pi/Lwz     =     22.2496
+ Deps.       =      0.0397
+ Ceps2       =      1.9936
+ E1          =      1.0000
+ E3          =      1.0000
+ PAO seed    =        1983
+ PAO initialization OK. VISC=0.0009968169
+ effective = gpu (xp = cupy)
+ scipy.fft workers in-context = 1
+ [NEXTDT INIT] CFLM=   666.0746 DT=  0.0003584 CN=  1.0000000
+ Initial DT=  0.0003584 CN=  1.0000000
+ ITERATION      1 T=0.0003584169 DT=0.00035843 CN=1.00004586
+ ITERATION    100 T=0.0363059609 DT=0.00036914 CN=1.00038089
+ ITERATION    200 T=0.0739690547 DT=0.00038470 CN=1.00043868
+ ITERATION    300 T=0.1131380693 DT=0.00039448 CN=0.99997352
+ ITERATION    400 T=0.1527099181 DT=0.00039850 CN=1.00021155
+ ITERATION    500 T=0.1931656685 DT=0.00041252 CN=1.00045722
+ ITERATION    600 T=0.2354712870 DT=0.00043027 CN=0.99958555
+ ITERATION    700 T=0.2773100243 DT=0.00040781 CN=0.99957691
+ ITERATION    800 T=0.3173500197 DT=0.00039403 CN=0.99972283
+ ITERATION    900 T=0.3563232251 DT=0.00038625 CN=0.99986375
+ ITERATION   1000 T=0.3947971178 DT=0.00038425 CN=1.00003018
+ ITERATION   1100 T=0.4334098318 DT=0.00038939 CN=1.00023503
+ ITERATION   1200 T=0.4724741277 DT=0.00038959 CN=0.99994649
+ ITERATION   1300 T=0.5114274892 DT=0.00039034 CN=1.00007560
+ ITERATION   1400 T=0.5507061448 DT=0.00039622 CN=1.00021553
+ ITERATION   1500 T=0.5907756394 DT=0.00040269 CN=0.99997370
+ ITERATION   1600 T=0.6310131010 DT=0.00040264 CN=1.00004332
+ ITERATION   1700 T=0.6714249542 DT=0.00040624 CN=1.00013318
+ ITERATION   1800 T=0.7123188052 DT=0.00040668 CN=0.99934612
+ ITERATION   1900 T=0.7518143648 DT=0.00038451 CN=0.99955024
+ ITERATION   2000 T=0.7895159656 DT=0.00037057 CN=0.99971286
+ ITERATION   2100 T=0.8261403941 DT=0.00036261 CN=0.99982570
+ ITERATION   2200 T=0.8621504400 DT=0.00035783 CN=0.99988400
+ ITERATION   2300 T=0.8977089839 DT=0.00035306 CN=0.99984008
+ ITERATION   2400 T=0.9326890138 DT=0.00034600 CN=0.99976087
+ ITERATION   2500 T=0.9667848598 DT=0.00033503 CN=0.99964263
+ ITERATION   2600 T=0.9997163009 DT=0.00032373 CN=0.99967782
+ ITERATION   2700 T=1.0316033378 DT=0.00031427 CN=0.99974407
+ ITERATION   2800 T=1.0626593712 DT=0.00030722 CN=0.99981206
+ ITERATION   2900 T=1.0931483873 DT=0.00030302 CN=0.99990416
+ ITERATION   3000 T=1.1233673941 DT=0.00030189 CN=1.00001136
+ ITERATION   3100 T=1.1536329392 DT=0.00030397 CN=1.00011892
+ ITERATION   3200 T=1.1842649726 DT=0.00030928 CN=1.00022751
+ ITERATION   3300 T=1.2155870093 DT=0.00031777 CN=1.00032392
+ ITERATION   3400 T=1.2479086143 DT=0.00032924 CN=1.00038390
+ ITERATION   3500 T=1.2815038434 DT=0.00034316 CN=1.00043464
+ ITERATION   3600 T=1.3165894020 DT=0.00035899 CN=1.00046525
+ ITERATION   3700 T=1.3532986528 DT=0.00037524 CN=1.00041582
+ ITERATION   3800 T=1.3915129859 DT=0.00038821 CN=1.00025796
+ ITERATION   3900 T=1.4307472521 DT=0.00039592 CN=1.00015720
+ ITERATION   4000 T=1.4706183678 DT=0.00040132 CN=1.00012306
+ ITERATION   4100 T=1.5109606862 DT=0.00040519 CN=1.00006666
+ ITERATION   4200 T=1.5515479287 DT=0.00040595 CN=0.99997235
+ ITERATION   4300 T=1.5920531178 DT=0.00040381 CN=0.99993182
+ ITERATION   4400 T=1.6322876339 DT=0.00040092 CN=0.99994013
+ ITERATION   4500 T=1.6722814783 DT=0.00039924 CN=0.99997781
+ ITERATION   4600 T=1.7122039288 DT=0.00039956 CN=1.00003319
+ ITERATION   4700 T=1.7522640336 DT=0.00040202 CN=1.00008724
+ ITERATION   4800 T=1.7926727773 DT=0.00040654 CN=1.00013274
+ ITERATION   4900 T=1.8336315687 DT=0.00041298 CN=1.00017747
+ ITERATION   5000 T=1.8753026091 DT=0.00042065 CN=1.00018514
+ ITERATION   5100 T=1.9177566313 DT=0.00042845 CN=1.00018107
+ ITERATION   5200 T=1.9609625679 DT=0.00043563 CN=1.00015788
+ ITERATION   5300 T=2.0048620153 DT=0.00044238 CN=1.00015627
+ ITERATION   5400 T=2.0494266906 DT=0.00044897 CN=1.00014195
+ ITERATION   5500 T=2.0946476937 DT=0.00045549 CN=1.00014266
+ ITERATION   5600 T=2.1405068676 DT=0.00046166 CN=1.00012576
+ ITERATION   5700 T=2.1869395835 DT=0.00046682 CN=1.00009531
+ ITERATION   5800 T=2.2332084451 DT=0.00045678 CN=0.99978475
+ ITERATION   5900 T=2.2785035384 DT=0.00045012 CN=0.99992511
+ ITERATION   6000 T=2.3234396303 DT=0.00044955 CN=1.00004561
+ ITERATION   6100 T=2.3685970006 DT=0.00045467 CN=1.00018739
+ ITERATION   6200 T=2.4145820845 DT=0.00046641 CN=1.00033085
+ ITERATION   6300 T=2.4613639800 DT=0.00046746 CN=0.99997677
+ ITERATION   6400 T=2.5080964952 DT=0.00046737 CN=1.00000647
+ ITERATION   6500 T=2.5548616064 DT=0.00046803 CN=1.00001052
+ ITERATION   6600 T=2.6017061314 DT=0.00046882 CN=1.00001192
+ ITERATION   6700 T=2.6486001151 DT=0.00046886 CN=0.99998221
+ ITERATION   6800 T=2.6954297683 DT=0.00046742 CN=0.99994667
+ ITERATION   6900 T=2.7420316024 DT=0.00046434 CN=0.99992511
+ ITERATION   7000 T=2.7882681814 DT=0.00046028 CN=0.99990950
+ ITERATION   7100 T=2.8340952273 DT=0.00045630 CN=0.99992059
+ ITERATION   7200 T=2.8795596633 DT=0.00045311 CN=0.99994032
+ ITERATION   7300 T=2.9247521022 DT=0.00045086 CN=0.99995928
+ ITERATION   7400 T=2.9697568144 DT=0.00044931 CN=0.99996878
+ ITERATION   7500 T=3.0146237844 DT=0.00044803 CN=0.99997055
+ ITERATION   7600 T=3.0593565269 DT=0.00044657 CN=0.99996572
+ ITERATION   7700 T=3.1039400910 DT=0.00044513 CN=0.99997293
+ ITERATION   7800 T=3.1484040880 DT=0.00044431 CN=0.99999375
+ ITERATION   7900 T=3.1928505302 DT=0.00044492 CN=1.00003428
+ ITERATION   8000 T=3.2374598978 DT=0.00044772 CN=1.00008861
+ ITERATION   8100 T=3.2824831026 DT=0.00045331 CN=1.00015636
+ ITERATION   8200 T=3.3282222453 DT=0.00046209 CN=1.00022306
+ ITERATION   8300 T=3.3749974213 DT=0.00047403 CN=1.00028601
+ ITERATION   8400 T=3.4231070422 DT=0.00048870 CN=1.00032249
+ ITERATION   8500 T=3.4727832563 DT=0.00050521 CN=1.00034014
+ ITERATION   8600 T=3.5241523080 DT=0.00052236 CN=1.00032541
+ ITERATION   8700 T=3.5772209197 DT=0.00053906 CN=1.00030179
+ ITERATION   8800 T=3.6316422943 DT=0.00054664 CN=1.00007565
+ ITERATION   8900 T=3.6865456507 DT=0.00055191 CN=1.00011926
+ ITERATION   9000 T=3.7414966973 DT=0.00054372 CN=0.99976720
+ ITERATION   9100 T=3.7952102797 DT=0.00052988 CN=0.99972293
+ ITERATION   9200 T=3.8474825303 DT=0.00051558 CN=0.99973191
+ ITERATION   9300 T=3.8983815794 DT=0.00050251 CN=0.99975759
+ ITERATION   9400 T=3.9480522153 DT=0.00049109 CN=0.99978754
+ ITERATION   9500 T=3.9966745316 DT=0.00048161 CN=0.99982532
+ ITERATION   9600 T=4.0444540978 DT=0.00047430 CN=0.99986934
+ ITERATION   9700 T=4.0916197416 DT=0.00046940 CN=0.99992397
+ ITERATION   9800 T=4.1384266458 DT=0.00046720 CN=0.99998644
+ ITERATION   9900 T=4.1851615880 DT=0.00046804 CN=1.00004710
+ ITERATION  10000 T=4.2321470306 DT=0.00047231 CN=1.00013263
+ ITERATION  10001 T=4.2326193395 DT=0.00047237 CN=1.00013306
+ Elapsed CPU time for 10001 steps (s) =  19.9731
+ Final T= 4.23262  CN= 1.00013  DT=0.000472372
+ FPS = 500.724
+  C:\Users\tobbe\python\cupyxturbo\scipyturbo\turbo_simulator.py: % of time =  
+                       100.00% (25.651s) out of 25.651s.                       
++-----------------------------------------------------------------------------+
+|       |Time    |–––––– |–––––– |                                            |
+| Line  |Python  |native |system |C:\Users\tobbe\python\cupyxturbo\scipyturb… |
+|-------+--------+-------+-------+--------------------------------------------|
+|     1 |        |       |       |"""                                         |
+|     2 |        |       |       |turbo_simulator.py â€” 2D Homogeneous Turbu |
+|     3 |        |       |       |                                            |
+|     4 |        |       |       |This is a structural port of dns_all.cu to  |
+|     5 |        |       |       |                                            |
+|     6 |        |       |       |Key ideas kept from the CUDA version:       |
+|     7 |        |       |       |  â€¢ DnsState structure mirrors DnsDeviceS |
+|     8 |        |       |       |  â€¢ UR (compact)  : shape (NZ, NX, 3)   â |
+|     9 |        |       |       |  â€¢ UC (compact)  : shape (NZ, NK, 3)   â |
+|    10 |        |       |       |  â€¢ UR_full (3/2) : shape (3, NZ_full, NX |
+|    11 |        |       |       |  â€¢ UC_full (3/2) : shape (3, NZ_full, NK |
+|    12 |        |       |       |  â€¢ om2, fnm1     : shape (NZ, NX_half) â |
+|    13 |        |       |       |  â€¢ alfa[NX_half], gamma[NZ]           â€ |
+|    14 |        |       |       |  â€¢ Time loop     : STEP2B â†’ STEP3 â†’  |
+|    15 |        |       |       |                                            |
+|    16 |        |       |       |Backends:                                   |
+|    17 |        |       |       |  â€¢ CPU:  SciPy                           |
+|    18 |        |       |       |  â€¢ GPU:  CuPy (if installed); same API u |
+|    19 |        |       |       |                                            |
+|    20 |        |       |       |This is now a faithful structural port of d |
+|    21 |        |       |       |                                            |
+|    22 |        |       |       |  â€¢ dnsCudaPaoHostInit  â†’ dns_pao_host_ |
+|    23 |        |       |       |  â€¢ dnsCudaCalcom       â†’ dns_calcom_fr |
+|    24 |        |       |       |  â€¢ dnsCudaStep2A/2B/3  â†’ dns_step2a /  |
+|    25 |        |       |       |  â€¢ next_dt_gpu         â†’ next_dt       |
+|    26 |        |       |       |                                            |
+|    27 |        |       |       |The 3/2 de-aliasing, Crankâ€“Nicolson updat |
+|    28 |        |       |       |formulas follow the CUDA kernels line-by-li |
+|    29 |        |       |       |"""                                         |
+|    30 |        |       |       |from contextlib import nullcontext          |
+|    31 |        |       |       |import time                                 |
+|    32 |        |       |       |import datetime as _dt                      |
+|    33 |        |       |       |import math                                 |
+|    34 |        |       |       |import sys                                  |
+|    35 |        |       |       |from dataclasses import dataclass           |
+|    36 |        |       |       |from typing import Literal                  |
+|    37 |        |       |       |                                            |
+|    38 |        |       |       |import numpy as _np                         |
+|    39 |        |       |       |                                            |
+|    40 |        |       |       |try:                                        |
+|    41 |        |       |       |    print(" Checking CuPy...")              |
+|    42 |        |       |   2%  |    import cupy as _cp                      |
+|    43 |        |       |       |    _cp.show_config()                       |
+|    44 |        |       |       |except Exception:  # CuPy is optional       |
+|    45 |        |       |       |    _cp = None                              |
+|    46 |        |       |       |    print(" CuPy not installed")            |
+|    47 |        |       |       |                                            |
+|    48 |        |       |       |import numpy as np  # in addition to your e |
+|    49 |        |       |       |                                            |
+|    50 |        |       |       |# ========================================= |
+|    51 |        |       |       |# ONLY FFT selection (CPU: scipy.fft, GPU:  |
+|    52 |        |       |       |# ========================================= |
+|    53 |        |       |       |try:                                        |
+|    54 |        |       |       |    import scipy.fft as _spfft  # type: ign |
+|    55 |        |       |       |except Exception:                           |
+|    56 |        |       |       |    _spfft = None                           |
+|    57 |        |       |       |                                            |
+|    58 |        |       |       |try:                                        |
+|    59 |        |       |       |    import cupyx.scipy.fft as _cpfft  # typ |
+|    60 |        |       |       |except Exception:                           |
+|    61 |        |       |       |    _cpfft = None                           |
+|    62 |        |       |       |                                            |
+|    63 |        |       |       |                                            |
+|    64 |        |       |       |def _fft_mod_for_state(S: "DnsState"):      |
+|    65 |        |       |       |    """                                     |
+|    66 |        |       |       |    ONLY FFT selection:                     |
+|    67 |        |       |       |      - CPU: scipy.fft                      |
+|    68 |        |       |       |      - GPU: cupyx.scipy.fft (fallback to c |
+|    69 |        |       |       |    """                                     |
+|    70 |        |       |       |    if S.backend == "gpu":                  |
+|    71 |        |       |       |        if _cpfft is not None:              |
+|    72 |        |       |       |            return _cpfft                   |
+|    73 |        |       |       |        return S.xp.fft                     |
+|    74 |        |       |       |    return _spfft                           |
+|    75 |        |       |       |                                            |
+|    76 |        |       |       |# ========================================= |
+|    77 |        |       |       |# Fortran-style random generator used in PA |
+|    78 |        |       |       |# ========================================= |
+|    79 |        |       |       |def frand(seed_list):                       |
+|    80 |        |       |       |    """                                     |
+|    81 |        |       |       |    Port of the Fortran LCG used in PAO:    |
+|    82 |        |       |       |                                            |
+|    83 |        |       |       |      IMM = 420029                          |
+|    84 |        |       |       |      IT  = 2017                            |
+|    85 |        |       |       |      ID  = 5011                            |
+|    86 |        |       |       |                                            |
+|    87 |        |       |       |      seed = (seed*IMM + IT) mod ID         |
+|    88 |        |       |       |      r    = seed / ID                      |
+|    89 |        |       |       |                                            |
+|    90 |        |       |       |    `seed_list` is a 1-element list to mimi |
+|    91 |        |       |       |    """                                     |
+|    92 |        |       |       |    IMM = 420029                            |
+|    93 |        |       |       |    IT = 2017                               |
+|    94 |        |       |       |    ID = 5011                               |
+|    95 |        |       |       |                                            |
+|    96 |        |       |       |    seed_list[0] = (seed_list[0] * IMM + IT |
+|    97 |        |       |       |    return np.float32(seed_list[0] / ID)    |
+|    98 |        |       |       |                                            |
+|    99 |        |       |       |                                            |
+|   100 |        |       |       |# ----------------------------------------- |
+|   101 |        |       |       |# Backend selection: xp = np (CPU) or cp (G |
+|   102 |        |       |       |# ----------------------------------------- |
+|   103 |        |       |       |def get_xp(backend: Literal["cpu", "gpu", " |
+|   104 |        |       |       |    """                                     |
+|   105 |        |       |       |    backend = "gpu"  â†’ force CuPy cuFFT ( |
+|   106 |        |       |       |    backend = "cpu"  â†’ force SciPy FFT    |
+|   107 |        |       |       |    backend = "auto" â†’ use CuPy if availa |
+|   108 |        |       |       |    """                                     |
+|   109 |        |       |       |    # Auto-select: try GPU first            |
+|   110 |        |       |       |    if backend == "auto":                   |
+|   111 |        |       |       |        if _cp is not None:                 |
+|   112 |        |       |       |            return _cp                      |
+|   113 |        |       |       |        return _np                          |
+|   114 |        |       |       |                                            |
+|   115 |        |       |       |    # Explicit GPU / CPU selection          |
+|   116 |        |       |       |    if backend == "gpu":                    |
+|   117 |        |       |       |        if _cp is None:                     |
+|   118 |        |       |       |            raise RuntimeError("CuPy is not |
+|   119 |        |       |       |        return _cp                          |
+|   120 |        |       |       |                                            |
+|   121 |        |       |       |    # backend == "cpu"                      |
+|   122 |        |       |       |    return _np                              |
+|   123 |        |       |       |                                            |
+|   124 |        |       |       |                                            |
+|   125 |        |       |       |# ----------------------------------------- |
+|   126 |        |       |       |# Fortran-style random generator used in PA |
+|   127 |        |       |       |# ----------------------------------------- |
+|   128 |        |       |       |                                            |
+|   129 |        |       |       |class Frand:                                |
+|   130 |        |       |       |    """                                     |
+|   131 |        |       |       |    Port of the tiny LCG from dns_all.cu:   |
+|   132 |        |       |       |                                            |
+|   133 |        |       |       |      IMM = 420029                          |
+|   134 |        |       |       |      IT  = 2017                            |
+|   135 |        |       |       |      ID  = 5011                            |
+|   136 |        |       |       |                                            |
+|   137 |        |       |       |      seed = (seed*IMM + IT) % ID           |
+|   138 |        |       |       |      r    = seed / ID                      |
+|   139 |        |       |       |    """                                     |
+|   140 |        |       |       |    IMM = 420029                            |
+|   141 |        |       |       |    IT = 2017                               |
+|   142 |        |       |       |    ID = 5011                               |
+|   143 |        |       |       |                                            |
+|   144 |        |       |       |    def __init__(self, seed: int = 1):      |
+|   145 |        |       |       |        self.seed = int(seed)               |
+|   146 |        |       |       |                                            |
+|   147 |        |       |       |    def __call__(self) -> float:            |
+|   148 |        |       |       |        self.seed = (self.seed * self.IMM + |
+|   149 |        |       |       |        return float(self.seed) / float(sel |
+|   150 |        |       |       |                                            |
+|   151 |        |       |       |                                            |
+|   152 |        |       |       |# ========================================= |
+|   153 |        |       |       |# Python equivalent of dnsCudaDumpUCFullCsv |
+|   154 |        |       |       |# ========================================= |
+|   155 |        |       |       |def dump_uc_full_csv(S: "DnsState", UC_full |
+|   156 |        |       |       |    """                                     |
+|   157 |        |       |       |    CSV dumper compatible with step2a_debug |
+|   158 |        |       |       |                                            |
+|   159 |        |       |       |        UC_full: (3, NZ_full, NK_full)  # [ |
+|   160 |        |       |       |                                            |
+|   161 |        |       |       |    We print NX_full rows, NZ_full columns: |
+|   162 |        |       |       |      - For i < 2*ND2:                      |
+|   163 |        |       |       |          kx       = i // 2                 |
+|   164 |        |       |       |          imag_row = (i & 1) == 1           |
+|   165 |        |       |       |          value    = Re or Im of UC_full[co |
+|   166 |        |       |       |      - For i >= 2*ND2, we print 0.0 (as in |
+|   167 |        |       |       |    """                                     |
+|   168 |        |       |       |    N = S.Nbase                             |
+|   169 |        |       |       |    NX_full = S.NX_full                     |
+|   170 |        |       |       |    NZ_full = S.NZ_full                     |
+|   171 |        |       |       |    NK_full = S.NK_full                     |
+|   172 |        |       |       |    ND2 = N // 2                            |
+|   173 |        |       |       |                                            |
+|   174 |        |       |       |    # Bring data to NumPy on CPU for printi |
+|   175 |        |       |       |    if S.backend == "gpu":                  |
+|   176 |        |       |       |        UC_local = _np.asarray(UC_full.get( |
+|   177 |        |       |       |    else:                                   |
+|   178 |        |       |       |        UC_local = _np.asarray(UC_full)     |
+|   179 |        |       |       |                                            |
+|   180 |        |       |       |    for i in range(NX_full):                |
+|   181 |        |       |       |        row_vals = []                       |
+|   182 |        |       |       |                                            |
+|   183 |        |       |       |        use_mode = (i < 2 * ND2)            |
+|   184 |        |       |       |        if use_mode:                        |
+|   185 |        |       |       |            kx = i // 2           # 0..ND2- |
+|   186 |        |       |       |            imag_row = (i & 1) == 1         |
+|   187 |        |       |       |        else:                               |
+|   188 |        |       |       |            kx = None                       |
+|   189 |        |       |       |            imag_row = False  # unused      |
+|   190 |        |       |       |                                            |
+|   191 |        |       |       |        for z in range(NZ_full):            |
+|   192 |        |       |       |            if use_mode and kx < NK_full:   |
+|   193 |        |       |       |                # SoA layout: [comp, z, kx] |
+|   194 |        |       |       |                v = UC_local[comp, z, kx]   |
+|   195 |        |       |       |                val = float(v.imag if imag_ |
+|   196 |        |       |       |            else:                           |
+|   197 |        |       |       |                val = 0.0                   |
+|   198 |        |       |       |                                            |
+|   199 |        |       |       |            row_vals.append(f"{val:10.5f}") |
+|   200 |        |       |       |                                            |
+|   201 |        |       |       |        print(",".join(row_vals))           |
+|   202 |        |       |       |                                            |
+|   203 |        |       |       |    print(f"[CSV] Wrote UC_full, {NX_full}x |
+|   204 |        |       |       |                                            |
+|   205 |        |       |       |                                            |
+|   206 |        |       |       |# ----------------------------------------- |
+|   207 |        |       |       |# DNS state  (Python equivalent of DnsDevic |
+|   208 |        |       |       |# ----------------------------------------- |
+|   209 |        |       |       |                                            |
+|   210 |        |       |       |@dataclass                                  |
+|   211 |        |       |       |class DnsState:                             |
+|   212 |        |       |       |    xp: any                 # scipy or cupy |
+|   213 |        |       |       |    backend: str            # "cpu" or "gpu |
+|   214 |        |       |       |                                            |
+|   215 |        |       |       |    Nbase: int              # Fortran NX=NZ |
+|   216 |        |       |       |    NX: int                                 |
+|   217 |        |       |       |    NZ: int                                 |
+|   218 |        |       |       |    NK: int                                 |
+|   219 |        |       |       |                                            |
+|   220 |        |       |       |    NX_full: int                            |
+|   221 |        |       |       |    NZ_full: int                            |
+|   222 |        |       |       |    NK_full: int                            |
+|   223 |        |       |       |                                            |
+|   224 |        |       |       |    Re: float                               |
+|   225 |        |       |       |    K0: float                               |
+|   226 |        |       |       |    visc: float             # viscosity     |
+|   227 |        |       |       |    cflnum: float           # CFL target    |
+|   228 |        |       |       |    seed_init: int = 1                      |
+|   229 |        |       |       |    fft_workers: int = 1                    |
+|   230 |        |       |       |                                            |
+|   231 |        |       |       |    # Cached FFT module (scipy.fft or cupyx |
+|   232 |        |       |       |    fft: any = None                         |
+|   233 |        |       |       |                                            |
+|   234 |        |       |       |    # Reusable cuFFT plans (GPU only)       |
+|   235 |        |       |       |    fft_plan_rfft2_ur_full: any = None      |
+|   236 |        |       |       |    fft_plan_irfft2_uc01: any = None        |
+|   237 |        |       |       |                                            |
+|   238 |        |       |       |    # Precomputed grid constants for CFL co |
+|   239 |        |       |       |    inv_dx: float = 0.0                     |
+|   240 |        |       |       |                                            |
+|   241 |        |       |       |    # CFL scratch to avoid per-step allocat |
+|   242 |        |       |       |    cfl_tmp: any = None                     |
+|   243 |        |       |       |    cfl_absw: any = None                    |
+|   244 |        |       |       |                                            |
+|   245 |        |       |       |    # Time integration                      |
+|   246 |        |       |       |    t: float = 0.0                          |
+|   247 |        |       |       |    dt: float = 0.0                         |
+|   248 |        |       |       |    cn: float = 1.0                         |
+|   249 |        |       |       |    cnm1: float = 0.0                       |
+|   250 |        |       |       |    it: int = 0                             |
+|   251 |        |       |       |                                            |
+|   252 |        |       |       |    # Spectral wavenumber vectors           |
+|   253 |        |       |       |    alfa: any = None        # shape (NX_hal |
+|   254 |        |       |       |    gamma: any = None       # shape (NZ,)   |
+|   255 |        |       |       |                                            |
+|   256 |        |       |       |    # Compact grid (AoS)                    |
+|   257 |        |       |       |    ur: any = None          # shape (NZ, NX |
+|   258 |        |       |       |    uc: any = None          # shape (NZ, NK |
+|   259 |        |       |       |                                            |
+|   260 |        |       |       |    # Full 3/2 grid (SoA)                   |
+|   261 |        |       |       |    ur_full: any = None     # shape (3, NZ_ |
+|   262 |        |       |       |    uc_full: any = None     # shape (3, NZ_ |
+|   263 |        |       |       |                                            |
+|   264 |        |       |       |    # Vorticity and non-linear history      |
+|   265 |        |       |       |    om2: any = None         # shape (NZ, NX |
+|   266 |        |       |       |    fnm1: any = None        # shape (NZ, NX |
+|   267 |        |       |       |                                            |
+|   268 |        |       |       |    scratch1: any = None                    |
+|   269 |        |       |       |    scratch2: any = None                    |
+|   270 |        |       |       |                                            |
+|   271 |        |       |       |    # Precomputed index grids for STEP3 (av |
+|   272 |        |       |       |    step3_z_indices: any = None             |
+|   273 |        |       |       |    step3_kx_indices: any = None            |
+|   274 |        |       |       |    step3_z_spec: any = None                |
+|   275 |        |       |       |                                            |
+|   276 |        |       |       |    # STEP3 scratch buffers & constants (av |
+|   277 |        |       |       |    step3_uc1_th: any = None                |
+|   278 |        |       |       |    step3_uc2_th: any = None                |
+|   279 |        |       |       |    step3_uc3_th: any = None                |
+|   280 |        |       |       |                                            |
+|   281 |        |       |       |    step3_K2: any = None          # float32 |
+|   282 |        |       |       |    step3_GA: any = None          # float32 |
+|   283 |        |       |       |    step3_G2mA2: any = None       # float32 |
+|   284 |        |       |       |    step3_invK2_sub: any = None   # float32 |
+|   285 |        |       |       |                                            |
+|   286 |        |       |       |    step3_ARG: any = None         # float32 |
+|   287 |        |       |       |    step3_DEN: any = None         # float32 |
+|   288 |        |       |       |    step3_NUM: any = None         # complex |
+|   289 |        |       |       |                                            |
+|   290 |        |       |       |    step3_mask_ix0: any = None    # bool (N |
+|   291 |        |       |       |    step3_inv_gamma0: any = None  # float32 |
+|   292 |        |       |       |    step3_divxz: any = None       # float32 |
+|   293 |        |       |       |                                            |
+|   294 |        |       |       |    def sync(self):                         |
+|   295 |        |       |       |        """For a CuPy backend, force synchr |
+|   296 |        |       |       |        if self.backend == "gpu":           |
+|   297 |        |       |       |            self.xp.cuda.Stream.null.synchr |
+|   298 |        |       |       |                                            |
+|   299 |        |       |       |                                            |
+|   300 |        |       |       |# ----------------------------------------- |
+|   301 |        |       |       |# Helper to create a DnsState (dnsCudaInit  |
+|   302 |        |       |       |# ----------------------------------------- |
+|   303 |        |       |       |                                            |
+|   304 |        |       |       |def create_dns_state(                       |
+|   305 |        |       |       |    N: int = 8,                             |
+|   306 |        |       |       |    Re: float = 1e5,                        |
+|   307 |        |       |       |    K0: float = 100.0,                      |
+|   308 |        |       |       |    CFL: float = 0.75,                      |
+|   309 |        |       |       |    backend: Literal["cpu", "gpu", "auto"]  |
+|   310 |        |       |       |    seed: int = 1,                          |
+|   311 |        |       |       |) -> DnsState:                              |
+|   312 |        |       |       |    xp = get_xp(backend)                    |
+|   313 |        |       |       |                                            |
+|   314 |        |       |       |    if backend == "auto":                   |
+|   315 |        |       |       |        effective_backend = "gpu" if (_cp i |
+|   316 |        |       |       |    else:                                   |
+|   317 |        |       |       |        effective_backend = backend         |
+|   318 |        |       |       |                                            |
+|   319 |        |       |       |    print(f" backend:  {backend}")          |
+|   320 |        |       |       |    Nbase = N                               |
+|   321 |        |       |       |    NX = N                                  |
+|   322 |        |       |       |    NZ = N                                  |
+|   323 |        |       |       |                                            |
+|   324 |        |       |       |    # Your CUDA code uses 3*N/2 (full 3/2 g |
+|   325 |        |       |       |    NX_full = 3 * NX // 2                   |
+|   326 |        |       |       |    NZ_full = 3 * NZ // 2                   |
+|   327 |        |       |       |    NK_full = NX_full // 2 + 1              |
+|   328 |        |       |       |                                            |
+|   329 |        |       |       |    # Compact spectral NK:                  |
+|   330 |        |       |       |    # For the original PAO/Calcom you used  |
+|   331 |        |       |       |    NK = 3 * NX // 4 + 1                    |
+|   332 |        |       |       |                                            |
+|   333 |        |       |       |    NX_half = NX // 2                       |
+|   334 |        |       |       |                                            |
+|   335 |        |       |       |    # Viscosity: in your original Fortran/C |
+|   336 |        |       |       |    # from PAO/Calcom; here we keep a stand |
+|   337 |        |       |       |    visc = 1.0 / float(Re)                  |
+|   338 |        |       |       |                                            |
+|   339 |        |       |       |    state = DnsState(                       |
+|   340 |        |       |       |        xp=xp,                              |
+|   341 |        |       |       |        backend=effective_backend,          |
+|   342 |        |       |       |        Nbase=Nbase,                        |
+|   343 |        |       |       |        NX=NX,                              |
+|   344 |        |       |       |        NZ=NZ,                              |
+|   345 |        |       |       |        NK=NK,                              |
+|   346 |        |       |       |        NX_full=NX_full,                    |
+|   347 |        |       |       |        NZ_full=NZ_full,                    |
+|   348 |        |       |       |        NK_full=NK_full,                    |
+|   349 |        |       |       |        Re=Re,                              |
+|   350 |        |       |       |        K0=K0,                              |
+|   351 |        |       |       |        visc=visc,                          |
+|   352 |        |       |       |        cflnum=CFL,                         |
+|   353 |        |       |       |        seed_init=int(seed),                |
+|   354 |        |       |       |        fft_workers=5,                      |
+|   355 |        |       |       |    )                                       |
+|   356 |        |       |       |    print(f" workers (CPU): {state.fft_work |
+|   357 |        |       |       |                                            |
+|   358 |        |       |       |    # Cache FFT module for the chosen backe |
+|   359 |        |       |       |    state.fft = _fft_mod_for_state(state)   |
+|   360 |        |       |       |                                            |
+|   361 |        |       |       |    # Precompute inverse grid spacing (dx== |
+|   362 |        |       |       |    state.inv_dx = float(state.Nbase) / (2. |
+|   363 |        |       |       |                                            |
+|   364 |        |       |       |    # Allocate arrays                       |
+|   365 |        |       |       |    state.ur = xp.zeros((NZ, NX, 3), dtype= |
+|   366 |        |       |       |    state.uc = xp.zeros((NZ, NK, 3), dtype= |
+|   367 |        |       |       |                                            |
+|   368 |        |       |       |    state.ur_full = xp.zeros((3, NZ_full, N |
+|   369 |        |       |       |    state.uc_full = xp.zeros((3, NZ_full, N |
+|   370 |        |       |       |                                            |
+|   371 |        |       |       |    # CFL scratch buffers (full 3/2 grid) t |
+|   372 |        |       |       |    state.cfl_tmp = xp.empty((NZ_full, NX_f |
+|   373 |        |       |       |    state.cfl_absw = xp.empty((NZ_full, NX_ |
+|   374 |        |       |       |                                            |
+|   375 |        |       |       |    state.om2 = xp.zeros((NZ, NX_half), dty |
+|   376 |        |       |       |    state.fnm1 = xp.zeros((NZ, NX_half), dt |
+|   377 |        |       |       |                                            |
+|   378 |        |       |       |    state.alfa = xp.zeros((NX_half,), dtype |
+|   379 |        |       |       |    state.gamma = xp.zeros((NZ,), dtype=xp. |
+|   380 |        |       |       |                                            |
+|   381 |        |       |       |    # Reusable cuFFT plans (GPU only)       |
+|   382 |        |       |       |    if state.backend == "gpu":              |
+|   383 |        |       |       |        plan_mod = None                     |
+|   384 |        |       |       |        if _cpfft is not None and hasattr(_ |
+|   385 |        |       |       |            plan_mod = _cpfft               |
+|   386 |        |       |       |                                            |
+|   387 |        |       |       |        if plan_mod is not None:            |
+|   388 |        |       |       |            # Forward: rfft2 on real UR_ful |
+|   389 |        |       |       |            state.fft_plan_rfft2_ur_full =  |
+|   390 |        |       |       |                state.ur_full, axes=(1, 2), |
+|   391 |        |       |       |            )                               |
+|   392 |        |       |       |            # Inverse: irfft2 on UC_full[0: |
+|   393 |        |       |       |            state.fft_plan_irfft2_uc01 = pl |
+|   394 |        |       |       |                state.uc_full[0:2],         |
+|   395 |        |       |       |                shape=(state.NZ_full, state |
+|   396 |        |       |       |                axes=(1, 2),                |
+|   397 |        |       |       |                value_type="C2R",           |
+|   398 |        |       |       |            )                               |
+|   399 |        |       |       |                                            |
+|   400 |        |       |       |        if plan_mod is None:                |
+|   401 |        |       |       |            print("FFT plan_mod: None")     |
+|   402 |        |       |       |        else:                               |
+|   403 |        |       |       |            print(f"FFT plan_mod: {plan_mod |
+|   404 |        |       |       |                                            |
+|   405 |        |       |       |    # PAO-style initialization (dnsCudaPaoH |
+|   406 |        |       |       |    dns_pao_host_init(state)                |
+|   407 |        |       |       |                                            |
+|   408 |        |       |       |    # DT and CN will be initialized in run_ |
+|   409 |        |       |       |    state.dt = 0.0                          |
+|   410 |        |       |       |    state.cn = 1.0                          |
+|   411 |        |       |       |    state.cnm1 = 0.0                        |
+|   412 |        |       |       |                                            |
+|   413 |        |       |       |    state.scratch1 = xp.zeros((NZ, NX_half) |
+|   414 |        |       |       |    state.scratch2 = xp.zeros((NZ, NX_half) |
+|   415 |        |       |       |                                            |
+|   416 |        |       |       |    # Precompute index grids used in STEP3  |
+|   417 |        |       |       |    NZ = state.NZ                           |
+|   418 |        |       |       |    NX_half = state.NX // 2                 |
+|   419 |        |       |       |    state.step3_z_indices = xp.arange(NZ, d |
+|   420 |        |       |       |    state.step3_kx_indices = xp.arange(NX_h |
+|   421 |        |       |       |    NZ_half = NZ // 2                       |
+|   422 |        |       |       |    zi = state.step3_z_indices              |
+|   423 |        |       |       |    state.step3_z_spec = xp.where(          |
+|   424 |        |       |       |        zi <= (NZ_half - 1),                |
+|   425 |        |       |       |        zi,                                 |
+|   426 |        |       |       |        zi + NZ_half,                       |
+|   427 |        |       |       |    )                                       |
+|   428 |        |       |       |                                            |
+|   429 |        |       |       |    # STEP3: preallocate gather buffers for |
+|   430 |        |       |       |    state.step3_uc1_th = xp.empty((NZ, NX_h |
+|   431 |        |       |       |    state.step3_uc2_th = xp.empty((NZ, NX_h |
+|   432 |        |       |       |    state.step3_uc3_th = xp.empty((NZ, NX_h |
+|   433 |        |       |       |                                            |
+|   434 |        |       |       |    # STEP3: precompute constant spectral g |
+|   435 |        |       |       |    ax = state.alfa[None, :]          # (1, |
+|   436 |        |       |       |    gz = state.gamma[:, None]         # (NZ |
+|   437 |        |       |       |    ax2 = ax * ax                           |
+|   438 |        |       |       |    gz2 = gz * gz                           |
+|   439 |        |       |       |                                            |
+|   440 |        |       |       |    state.step3_K2 = (ax2 + gz2).astype(xp. |
+|   441 |        |       |       |    state.step3_GA = (gz * ax).astype(xp.fl |
+|   442 |        |       |       |    state.step3_G2mA2 = (gz2 - ax2).astype( |
+|   443 |        |       |       |                                            |
+|   444 |        |       |       |    if NX_half > 1:                         |
+|   445 |        |       |       |        state.step3_invK2_sub = (xp.float32 |
+|   446 |        |       |       |    else:                                   |
+|   447 |        |       |       |        state.step3_invK2_sub = xp.empty((N |
+|   448 |        |       |       |                                            |
+|   449 |        |       |       |    # STEP3: per-step float/complex scratch |
+|   450 |        |       |       |    state.step3_ARG = xp.empty((NZ, NX_half |
+|   451 |        |       |       |    state.step3_DEN = xp.empty((NZ, NX_half |
+|   452 |        |       |       |    state.step3_NUM = xp.empty((NZ, NX_half |
+|   453 |        |       |       |                                            |
+|   454 |        |       |       |    # ix=0 branch mask (Z>=1 and GAMMA!=0), |
+|   455 |        |       |       |    state.step3_mask_ix0 = (state.step3_z_i |
+|   456 |        |       |       |                                            |
+|   457 |        |       |       |    # Precompute safe inv_gamma for ix=0 (a |
+|   458 |        |       |       |    mask0 = xp.asarray(state.step3_mask_ix0 |
+|   459 |        |       |       |    safe_gamma = xp.where(mask0, state.gamm |
+|   460 |        |       |       |    inv_gamma0 = (xp.float32(1.0) / safe_ga |
+|   461 |        |       |       |    inv_gamma0 *= mask0.astype(xp.float32,  |
+|   462 |        |       |       |                                            |
+|   463 |        |       |       |    state.step3_mask_ix0 = mask0            |
+|   464 |        |       |       |    state.step3_inv_gamma0 = inv_gamma0     |
+|   465 |        |       |       |                                            |
+|   466 |        |       |       |    # DIVXZ = 1/(3NX/2 * 3NZ/2), constant f |
+|   467 |        |       |       |    NX32 = xp.float32(1.5) * xp.float32(sta |
+|   468 |        |       |       |    NZ32 = xp.float32(1.5) * xp.float32(sta |
+|   469 |        |       |       |    state.step3_divxz = xp.float32(1.0) / ( |
+|   470 |        |       |       |                                            |
+|   471 |        |       |       |    return state                            |
+|   472 |        |       |       |                                            |
+|   473 |        |       |       |# ========================================= |
+|   474 |        |       |       |# Python/Numpy/Scipy port of dnsCudaPaoHost |
+|   475 |        |       |       |# ========================================= |
+|   476 |        |       |       |def dns_pao_host_init(S: DnsState):         |
+|   477 |        |       |       |    xp = S.xp                               |
+|   478 |        |       |       |    N = S.NX                                |
+|   479 |        |       |       |    NE = S.NZ                               |
+|   480 |        |       |       |    ND2 = N // 2                            |
+|   481 |        |       |       |    NED2 = NE // 2                          |
+|   482 |        |       |       |    PI = np.float32(3.14159265358979)       |
+|   483 |        |       |       |                                            |
+|   484 |        |       |       |    DXZ = np.float32(2.0) * PI / np.float32 |
+|   485 |        |       |       |    K0 = np.float32(S.K0)                   |
+|   486 |        |       |       |    NORM = PI * K0 * K0                     |
+|   487 |        |       |       |                                            |
+|   488 |        |       |       |    print("--- INITIALIZING SciPy/CuPy ---" |
+|   489 |        |       |       |    print(f" N={N}, K0={int(K0)}, Re={S.Re} |
+|   490 |        |       |       |                                            |
+|   491 |        |       |       |    # ------------------------------------- |
+|   492 |        |       |       |    # Build ALFA(N/2) and GAMMA(N)  (Fortra |
+|   493 |        |       |       |    # ------------------------------------- |
+|   494 |        |       |       |    alfa = np.zeros(ND2, dtype=np.float32)  |
+|   495 |        |       |       |    gamma = np.zeros(NE, dtype=np.float32)  |
+|   496 |        |       |       |                                            |
+|   497 |        |       |       |    E1 = np.float32(1.0)                    |
+|   498 |        |       |       |    E3 = np.float32(1.0) / E1               |
+|   499 |        |       |       |                                            |
+|   500 |        |       |       |    DALFA = np.float32(1.0) / E1            |
+|   501 |        |       |       |    DGAMMA = np.float32(1.0) / E3           |
+|   502 |        |       |       |                                            |
+|   503 |        |       |       |    for x in range(NED2):                   |
+|   504 |        |       |       |        alfa[x] = np.float32(x) * DALFA     |
+|   505 |        |       |       |                                            |
+|   506 |        |       |       |    gamma[0] = np.float32(0.0)              |
+|   507 |        |       |       |    for z in range(1, NED2 + 1):            |
+|   508 |        |       |       |        gamma[z] = np.float32(z) * DGAMMA   |
+|   509 |        |       |       |        gamma[NE - z] = -gamma[z]           |
+|   510 |        |       |       |                                            |
+|   511 |        |       |       |    # ------------------------------------- |
+|   512 |        |       |       |    # Host spectral UR: complex field UR(kx |
+|   513 |        |       |       |    # comp=0 â†’ u1, comp=1 â†’ u3 (Fortran |
+|   514 |        |       |       |    #                                       |
+|   515 |        |       |       |    #   UR[x,z,c]  where  x âˆˆ [0..ND2-1], |
+|   516 |        |       |       |    # ------------------------------------- |
+|   517 |        |       |       |    UR = np.zeros((ND2, NE, 2), dtype=np.co |
+|   518 |        |       |       |                                            |
+|   519 |        |       |       |    # ------------------------------------- |
+|   520 |        |       |       |    # Fortran random vector RANVEC(97)      |
+|   521 |        |       |       |    # ------------------------------------- |
+|   522 |        |       |       |    seed = [int(S.seed_init)]  # mimics ISE |
+|   523 |        |       |       |    RANVEC = np.zeros(97, dtype=np.float32) |
+|   524 |        |       |       |                                            |
+|   525 |        |       |       |    # "warm-up" 97 calls                    |
+|   526 |        |       |       |    for _ in range(97):                     |
+|   527 |        |       |       |        frand(seed)                         |
+|   528 |        |       |       |                                            |
+|   529 |        |       |       |    # fill RANVEC                           |
+|   530 |        |       |       |    for i in range(97):                     |
+|   531 |        |       |       |        RANVEC[i] = frand(seed)             |
+|   532 |        |       |       |                                            |
+|   533 |        |       |       |    def random_from_vec(r: np.float32) -> n |
+|   534 |        |       |       |        idx = int(float(r) * 97.0)          |
+|   535 |        |       |       |        if idx < 0:                         |
+|   536 |        |       |       |            idx = 0                         |
+|   537 |        |       |       |        if idx > 96:                        |
+|   538 |        |       |       |            idx = 96                        |
+|   539 |        |       |       |        v = RANVEC[idx]                     |
+|   540 |        |       |       |        RANVEC[idx] = r                     |
+|   541 |        |       |       |        return v                            |
+|   542 |        |       |       |                                            |
+|   543 |        |       |       |    # ------------------------------------- |
+|   544 |        |       |       |    # Generate isotropic random spectrum (F |
+|   545 |        |       |       |    # ------------------------------------- |
+|   546 |        |       |       |    print("Generate isotropic random spectr |
+|   547 |        |       |       |    for z in range(NE):                     |
+|   548 |        |       |       |        if z % 1000 == 0:                   |
+|   549 |        |       |       |            print(f"z={z}/{NE}")            |
+|   550 |        |       |       |                                            |
+|   551 |        |       |       |        gz = gamma[z]                       |
+|   552 |        |       |       |        for x in range(NED2):               |
+|   553 |        |       |       |            r = frand(seed)                 |
+|   554 |        |       |       |            th = np.float32(2.0) * PI * ran |
+|   555 |        |       |       |                                            |
+|   556 |        |       |       |            ARG = np.complex64(np.cos(th) + |
+|   557 |        |       |       |                                            |
+|   558 |        |       |       |            ax = alfa[x]                    |
+|   559 |        |    1% |       |            K2 = np.float32(ax * ax + gz *  |
+|   560 |        |       |       |            K = np.float32(np.sqrt(K2)) if  |
+|   561 |        |       |       |                                            |
+|   562 |        |       |       |            if ax == 0.0:                   |
+|   563 |        |       |       |                # ALFA(X) == 0: purely u1 m |
+|   564 |        |       |       |                UR[x, z, 1] = np.complex64( |
+|   565 |        |       |       |                                            |
+|   566 |        |       |       |                ABSU2 = np.float32(np.exp(- |
+|   567 |        |       |       |                amp = np.float32(np.sqrt(AB |
+|   568 |        |       |       |                UR[x, z, 0] = np.complex64( |
+|   569 |        |       |       |            else:                           |
+|   570 |        |       |       |                denom = np.float32(1.0) + ( |
+|   571 |        |       |       |                ABSW2 = np.float32(np.exp(- |
+|   572 |        |       |       |                ampw = np.float32(np.sqrt(A |
+|   573 |        |       |       |                                            |
+|   574 |        |       |       |                w = np.complex64(ampw) * AR |
+|   575 |        |       |       |                u = np.complex64(- (gz / ax |
+|   576 |        |       |       |                                            |
+|   577 |        |       |       |                UR[x, z, 1] = w             |
+|   578 |        |       |       |                UR[x, z, 0] = u             |
+|   579 |        |       |       |                                            |
+|   580 |        |       |       |    # Special zero modes (UR(1,1,1)=0, UR(1 |
+|   581 |        |       |       |    UR[0, 0, 0] = np.complex64(0.0 + 0.0j)  |
+|   582 |        |       |       |    UR[0, 0, 1] = np.complex64(0.0 + 0.0j)  |
+|   583 |        |       |       |                                            |
+|   584 |        |       |       |    # ------------------------------------- |
+|   585 |        |       |       |    # Hermitian symmetry in Z (Fortran DO 6 |
+|   586 |        |       |       |    # ------------------------------------- |
+|   587 |        |       |       |    for z in range(1, NED2):                |
+|   588 |        |       |       |        UR[0, NE - z, 0] = np.conj(UR[0, z, |
+|   589 |        |       |       |        UR[0, NE - z, 1] = np.conj(UR[0, z, |
+|   590 |        |       |       |                                            |
+|   591 |        |       |       |    # Zero at Z=NED2+1 (index NED2 in 0-bas |
+|   592 |        |       |       |    UR[:, NED2, 0] = 0.0 + 0.0j             |
+|   593 |        |       |       |    UR[:, NED2, 1] = 0.0 + 0.0j             |
+|   594 |        |       |       |                                            |
+|   595 |        |       |       |    # ------------------------------------- |
+|   596 |        |       |       |    # Compute averages A(1..7), E110, Q2, W |
+|   597 |        |       |       |    # ------------------------------------- |
+|   598 |        |       |       |    A1 = A2 = A3 = A4 = A5 = A6 = A7 = 0.0  |
+|   599 |        |       |       |    E110 = 0.0                              |
+|   600 |        |       |       |                                            |
+|   601 |        |       |       |    print("Compute averages A(1..7), E110,  |
+|   602 |        |       |       |    for x in range(ND2):                    |
+|   603 |        |       |       |        x1 = (x == 0)                       |
+|   604 |        |       |       |        ax2 = float(alfa[x]) * float(alfa[x |
+|   605 |        |       |       |                                            |
+|   606 |        |       |       |        for z in range(NE):                 |
+|   607 |        |       |       |            U1 = UR[x, z, 0]                |
+|   608 |        |       |       |            U3 = UR[x, z, 1]                |
+|   609 |        |       |       |                                            |
+|   610 |        |       |       |            u1u1 = float(np.abs(U1) ** 2)   |
+|   611 |        |       |       |            u3u3 = float(np.abs(U3) ** 2)   |
+|   612 |        |       |       |                                            |
+|   613 |        |       |       |            gz2 = float(gamma[z]) * float(g |
+|   614 |        |       |       |            K2 = ax2 + gz2                  |
+|   615 |        |       |       |            m = 1.0 if x1 else 2.0          |
+|   616 |        |       |       |                                            |
+|   617 |        |       |       |            A1 += m * u1u1                  |
+|   618 |        |       |       |            A2 += m * u3u3                  |
+|   619 |        |       |       |            A3 += m * u1u1 * ax2            |
+|   620 |        |       |       |            A4 += m * u1u1 * gz2            |
+|   621 |        |       |       |            A5 += m * u3u3 * ax2            |
+|   622 |        |       |       |            A6 += m * u3u3 * gz2            |
+|   623 |        |       |       |            A7 += m * (u1u1 + u3u3) * K2 *  |
+|   624 |        |       |       |                                            |
+|   625 |        |       |       |            if x1:                          |
+|   626 |        |       |       |                E110 += u1u1                |
+|   627 |        |       |       |                                            |
+|   628 |        |       |       |    Q2 = A1 + A2                            |
+|   629 |        |       |       |    W2 = A3 + A4 + A5 + A6                  |
+|   630 |        |       |       |    visc = math.sqrt(Q2 * Q2 / (float(S.Re) |
+|   631 |        |       |       |                                            |
+|   632 |        |       |       |    S.visc = np.float32(visc)               |
+|   633 |        |       |       |                                            |
+|   634 |        |       |       |    # ------------------------------------- |
+|   635 |        |       |       |    # Extra diagnostics (Fortran WRITE bloc |
+|   636 |        |       |       |    # ------------------------------------- |
+|   637 |        |       |       |    EP = visc * W2                          |
+|   638 |        |       |       |    De = 2.0 * visc * visc * A7             |
+|   639 |        |       |       |    KOL = (visc * visc * visc / EP) ** 0.25 |
+|   640 |        |       |       |    NLAM = 0.0                              |
+|   641 |        |       |       |    if E110 != 0.0:                         |
+|   642 |        |       |       |        NLAM = 2.0 * A1 / E110              |
+|   643 |        |       |       |                                            |
+|   644 |        |       |       |    a11 = 2.0 * A1 / Q2 - 1.0               |
+|   645 |        |       |       |    e11 = 2.0 * (A3 + A4) / W2 - 1.0        |
+|   646 |        |       |       |    tscale = 0.5 * Q2 / EP                  |
+|   647 |        |       |       |    dxKol = float(DXZ) / KOL                |
+|   648 |        |       |       |    Lux = 2.0 * math.pi / math.sqrt(2.0 * A |
+|   649 |        |       |       |    Luz = 2.0 * math.pi / math.sqrt(2.0 * A |
+|   650 |        |       |       |    Lwx = 2.0 * math.pi / math.sqrt(2.0 * A |
+|   651 |        |       |       |    Lwz = 2.0 * math.pi / math.sqrt(2.0 * A |
+|   652 |        |       |       |    Ceps2 = 0.5 * Q2 * De / (EP * EP)       |
+|   653 |        |       |       |                                            |
+|   654 |        |       |       |    # Print diagnostics exactly like the CU |
+|   655 |        |       |       |    print(f" N           ={N:12.0f}")       |
+|   656 |        |       |       |    print(f" Reynolds n. ={float(S.Re):12.1 |
+|   657 |        |       |       |    print(f" K0          ={K0:12.0f}")      |
+|   658 |        |       |       |    print(f" Energy      ={Q2:12.4f}")      |
+|   659 |        |       |       |    print(f" WiWi        ={W2:12.4f}")      |
+|   660 |        |       |       |    print(f" Epsilon     ={EP:12.4f}")      |
+|   661 |        |       |       |    print(f" a11         ={a11:12.4f}")     |
+|   662 |        |       |       |    print(f" e11         ={e11:12.4f}")     |
+|   663 |        |       |       |    print(f" Time scale  ={tscale:12.4g}")  |
+|   664 |        |       |       |    print(f" Kolmogorov  ={KOL:12.4f}")     |
+|   665 |        |       |       |    print(f" Viscosity   ={visc:12.4f}")    |
+|   666 |        |       |       |    print(f" dx/Kol.     ={dxKol:12.4f}")   |
+|   667 |        |       |       |    print(f" 2Pi/Nlamda  ={NLAM:12.4f}")    |
+|   668 |        |       |       |    print(f" 2Pi/Lux     ={Lux:12.4f}")     |
+|   669 |        |       |       |    print(f" 2Pi/Luz     ={Luz:12.4f}")     |
+|   670 |        |       |       |    print(f" 2Pi/Lwx     ={Lwx:12.4f}")     |
+|   671 |        |       |       |    print(f" 2Pi/Lwz     ={Lwz:12.4f}")     |
+|   672 |        |       |       |    print(f" Deps.       ={De:12.4f}")      |
+|   673 |        |       |       |    print(f" Ceps2       ={Ceps2:12.4f}")   |
+|   674 |        |       |       |    print(f" E1          ={float(E1):12.4f} |
+|   675 |        |       |       |    print(f" E3          ={float(E3):12.4f} |
+|   676 |        |       |       |    print(f" PAO seed    ={seed[0]:12d}")   |
+|   677 |        |       |       |                                            |
+|   678 |        |       |       |    # ------------------------------------- |
+|   679 |        |       |       |    # Reshuffle (Fortran DO 1000 block)     |
+|   680 |        |       |       |    # ------------------------------------- |
+|   681 |        |       |       |    for comp in range(2):                   |
+|   682 |        |       |       |        for z in range(NED2 - 1, -1, -1):   |
+|   683 |        |       |       |            for x in range(ND2):            |
+|   684 |        |       |       |                # UR(X,N-NED2+Z,I) = UR(X,Z |
+|   685 |        |       |       |                UR[x, N - NED2 + z, comp] = |
+|   686 |        |       |       |                                            |
+|   687 |        |       |       |                # IF(Z.LE.(N-NE)) UR(X,Z+NE |
+|   688 |        |       |       |                if z <= (N - NE - 1):       |
+|   689 |        |       |       |                    UR[x, z + NED2, comp] = |
+|   690 |        |       |       |                                            |
+|   691 |        |       |       |    # ------------------------------------- |
+|   692 |        |       |       |    # Scatter spectral UR â†’ compact UC(kx |
+|   693 |        |       |       |    #   UC: (NK, NE, 3) on host, but DnsSta |
+|   694 |        |       |       |    # ------------------------------------- |
+|   695 |        |       |       |    NK = S.NK                               |
+|   696 |        |       |       |    UC_host = np.zeros((NK, NE, 3), dtype=n |
+|   697 |        |       |       |                                            |
+|   698 |        |       |       |    for z in range(NE):                     |
+|   699 |        |       |       |        for x in range(ND2):                |
+|   700 |        |       |       |            for c in range(2):              |
+|   701 |        |       |       |                UC_host[x, z, c] = UR[x, z, |
+|   702 |        |       |       |                                            |
+|   703 |        |       |       |    # ALSO build full 3/2-grid UC_full (For |
+|   704 |        |       |       |    NK_full = S.NK_full                     |
+|   705 |        |       |       |    NZ_full = S.NZ_full                     |
+|   706 |        |       |       |                                            |
+|   707 |        |       |       |    UC_full_host = np.zeros((NK_full, NZ_fu |
+|   708 |        |       |       |    for z in range(NE):                     |
+|   709 |        |       |       |        for x in range(ND2):                |
+|   710 |        |       |       |            for c in range(2):              |
+|   711 |        |       |       |                UC_full_host[x, z, c] = UR[ |
+|   712 |        |       |       |                                            |
+|   713 |        |       |       |    print(f" PAO initialization OK. VISC={f |
+|   714 |        |       |       |                                            |
+|   715 |        |       |       |    # ------------------------------------- |
+|   716 |        |       |       |    # Move alfa/gamma/UC/UC_full into DnsSt |
+|   717 |        |       |       |    # ------------------------------------- |
+|   718 |        |       |       |    S.alfa = xp.asarray(alfa, dtype=xp.floa |
+|   719 |        |       |       |    S.gamma = xp.asarray(gamma, dtype=xp.fl |
+|   720 |        |       |       |                                            |
+|   721 |        |       |       |    # compact UC: host (NK, NE, 3) â†’ xp ( |
+|   722 |        |       |       |    UC_xp = xp.asarray(UC_host)             |
+|   723 |        |       |       |    S.uc[...] = xp.transpose(UC_xp, (1, 0,  |
+|   724 |        |       |       |                                            |
+|   725 |        |       |       |    # full UC_full: host (NK_full, NZ_full, |
+|   726 |        |       |       |    UC_full_xp = xp.asarray(UC_full_host)   |
+|   727 |        |       |       |    S.uc_full[...] = xp.transpose(UC_full_x |
+|   728 |        |       |       |                                            |
+|   729 |        |       |       |    # ------------------------------------- |
+|   730 |        |       |       |    # Build initial UR_full & om2 from UC_f |
+|   731 |        |       |       |    # ------------------------------------- |
+|   732 |        |       |       |    # Inverse transform UC_full â†’ UR_full |
+|   733 |        |       |       |    vfft_full_inverse_uc_full_to_ur_full(S) |
+|   734 |        |       |       |                                            |
+|   735 |        |       |       |    # Spectral vorticity from UC_full, like |
+|   736 |        |       |       |    dns_calcom_from_uc_full(S)              |
+|   737 |        |       |       |                                            |
+|   738 |        |       |       |    # No history yet                        |
+|   739 |        |       |       |    S.fnm1[...] = xp.zeros_like(S.om2)      |
+|   740 |        |       |       |                                            |
+|   741 |        |       |       |                                            |
+|   742 |        |       |       |# ----------------------------------------- |
+|   743 |        |       |       |# FFT helpers (vfft_full_* equivalents)     |
+|   744 |        |       |       |# ----------------------------------------- |
+|   745 |        |       |       |                                            |
+|   746 |        |       |       |def vfft_full_inverse_uc_full_to_ur_full(S: |
+|   747 |        |       |       |    xp = S.xp                               |
+|   748 |        |       |       |    UC = S.uc_full                          |
+|   749 |        |       |       |    fft = S.fft                             |
+|   750 |        |       |       |    if fft is None:                         |
+|   751 |        |       |       |        raise RuntimeError("scipy.fft is no |
+|   752 |        |       |       |                                            |
+|   753 |        |       |       |    UC01 = UC[0:2, :, :]                    |
+|   754 |        |       |       |                                            |
+|   755 |        |       |       |    if S.backend == "cpu":                  |
+|   756 |        |       |       |        ur01 = fft.irfft2(UC01, s=(S.NZ_ful |
+|   757 |        |       |       |    else:                                   |
+|   758 |        |       |       |        plan = S.fft_plan_irfft2_uc01       |
+|   759 |        |       |       |        if plan is not None:                |
+|   760 |        |       |       |            with plan:                      |
+|   761 |        |       |       |                ur01 = fft.irfft2(UC01, s=( |
+|   762 |        |       |       |        else:                               |
+|   763 |        |       |       |            ur01 = fft.irfft2(UC01, s=(S.NZ |
+|   764 |        |       |       |                                            |
+|   765 |        |       |       |    S.ur_full[0:2, :, :] = xp.asarray(ur01, |
+|   766 |        |       |       |    S.ur_full[2, :, :] = xp.float32(0.0)    |
+|   767 |        |       |       |                                            |
+|   768 |        |       |       |                                            |
+|   769 |        |       |       |def vfft_full_forward_ur_full_to_uc_full(S: |
+|   770 |        |       |       |    """                                     |
+|   771 |        |       |       |    UR_full (3, NZ_full, NX_full) â†’ UC_fu |
+|   772 |        |       |       |                                            |
+|   773 |        |       |       |    Correct forward:                        |
+|   774 |        |       |       |      1) real FFT along x      (real â†’ co |
+|   775 |        |       |       |      2) FFT along z           (complex â†’ |
+|   776 |        |       |       |                                            |
+|   777 |        |       |       |    ONLY CHANGE: use rfft2 on (z,x) axes.   |
+|   778 |        |       |       |    """                                     |
+|   779 |        |       |       |    # S.ur_full is already float32          |
+|   780 |        |       |       |    UR = S.ur_full                          |
+|   781 |        |       |       |    fft = S.fft                             |
+|   782 |        |       |       |    if fft is None:                         |
+|   783 |        |       |       |        raise RuntimeError("scipy.fft is no |
+|   784 |        |       |       |                                            |
+|   785 |        |       |       |    if S.backend == "cpu":                  |
+|   786 |        |       |       |        # overwrite_x is safe here (UR_full |
+|   787 |        |       |       |        UC = fft.rfft2(UR, s=(S.NZ_full, S. |
+|   788 |        |       |       |    else:                                   |
+|   789 |        |       |       |        plan = S.fft_plan_rfft2_ur_full     |
+|   790 |        |       |       |        if plan is not None:                |
+|   791 |        |       |       |            with plan:                      |
+|   792 |        |       |       |                UC = fft.rfft2(UR, s=(S.NZ_ |
+|   793 |        |       |       |        else:                               |
+|   794 |        |       |       |            UC = fft.rfft2(UR, s=(S.NZ_full |
+|   795 |        |       |       |                                            |
+|   796 |        |       |       |    # Assign back; uc_full is complex64, as |
+|   797 |        |       |       |    S.uc_full[...] = UC                     |
+|   798 |        |       |       |                                            |
+|   799 |        |       |       |                                            |
+|   800 |        |       |       |# ----------------------------------------- |
+|   801 |        |       |       |# CALCOM â€” spectral vorticity from UC_ful |
+|   802 |        |       |       |# ----------------------------------------- |
+|   803 |        |       |       |                                            |
+|   804 |        |       |       |def dns_calcom_from_uc_full(S: DnsState) -> |
+|   805 |        |       |       |    """                                     |
+|   806 |        |       |       |    Python/xp port of dnsCudaCalcom:        |
+|   807 |        |       |       |                                            |
+|   808 |        |       |       |      OM2(ix,iz) = i * [ GAMMA(iz)*UC1(ix,i |
+|   809 |        |       |       |                                            |
+|   810 |        |       |       |    Uses:                                   |
+|   811 |        |       |       |      S.uc_full : (3, NZ_full, NK_full)  [c |
+|   812 |        |       |       |      S.alfa    : (NX_half,)                |
+|   813 |        |       |       |      S.gamma   : (NZ,)                     |
+|   814 |        |       |       |    Writes:                                 |
+|   815 |        |       |       |      S.om2     : (NZ, NX_half)             |
+|   816 |        |       |       |    """                                     |
+|   817 |        |       |       |    xp = S.xp                               |
+|   818 |        |       |       |                                            |
+|   819 |        |       |       |    Nbase = int(S.Nbase)                    |
+|   820 |        |       |       |    NX_full = int(S.NX_full)                |
+|   821 |        |       |       |    NZ_full = int(S.NZ_full)                |
+|   822 |        |       |       |    NK_full = int(S.NK_full)                |
+|   823 |        |       |       |                                            |
+|   824 |        |       |       |    NX_half = Nbase // 2                    |
+|   825 |        |       |       |    NZ = Nbase                              |
+|   826 |        |       |       |                                            |
+|   827 |        |       |       |    alfa_1d = S.alfa.astype(xp.float32)     |
+|   828 |        |       |       |    gamma_1d = S.gamma.astype(xp.float32)   |
+|   829 |        |       |       |                                            |
+|   830 |        |       |       |    # UC_full layout: [comp, z, kx]         |
+|   831 |        |       |       |    uc1_full = S.uc_full[0]                 |
+|   832 |        |       |       |    uc2_full = S.uc_full[1]                 |
+|   833 |        |       |       |                                            |
+|   834 |        |       |       |    # We only use the first NZ rows and NX_ |
+|   835 |        |       |       |    uc1 = uc1_full[:NZ, :NX_half]           |
+|   836 |        |       |       |    uc2 = uc2_full[:NZ, :NX_half]           |
+|   837 |        |       |       |                                            |
+|   838 |        |       |       |    ax = alfa_1d[None, :]                   |
+|   839 |        |       |       |    gz = gamma_1d[:, None]                  |
+|   840 |        |       |       |                                            |
+|   841 |        |       |       |    # diff = GAMMA*UC1 - ALFA*UC2           |
+|   842 |        |       |       |    diff = gz * uc1 - ax * uc2              |
+|   843 |        |       |       |                                            |
+|   844 |        |       |       |    # om = i * diff = (-Im(diff), Re(diff)) |
+|   845 |        |       |       |    diff_r = diff.real                      |
+|   846 |        |       |       |    diff_i = diff.imag                      |
+|   847 |        |       |       |                                            |
+|   848 |        |       |       |    om_r = -diff_i                          |
+|   849 |        |       |       |    om_i = diff_r                           |
+|   850 |        |       |       |                                            |
+|   851 |        |       |       |    S.om2[...] = xp.asarray(om_r + 1j * om_ |
+|   852 |        |       |       |                                            |
+|   853 |        |       |       |                                            |
+|   854 |        |       |       |# ----------------------------------------- |
+|   855 |        |       |       |# STEP2B â€” build uiuj and forward FFT (dn |
+|   856 |        |       |       |# ----------------------------------------- |
+|   857 |        |       |       |def dns_step2b(S: DnsState) -> None:        |
+|   858 |        |       |       |    """                                     |
+|   859 |        |       |       |    Python/CuPy port of dnsCudaStep2B(DnsDe |
+|   860 |        |       |       |                                            |
+|   861 |        |       |       |    Mirrors Fortran STEP2B:                 |
+|   862 |        |       |       |                                            |
+|   863 |        |       |       |      1) Build uiuj in UR(x,z,1..3) on the  |
+|   864 |        |       |       |      2) Full-grid forward FFT: UR_full â†’ |
+|   865 |        |       |       |         (VRFFTF + VCFFTF in Fortran)       |
+|   866 |        |       |       |      3) Zero UC(X,NZ+1,I) for X<=NX/2, I=1 |
+|   867 |        |       |       |    """                                     |
+|   868 |        |       |       |    xp = S.xp                               |
+|   869 |        |       |       |                                            |
+|   870 |        |       |       |    # Geometry on the full 3/2 grid         |
+|   871 |        |       |       |    N = S.Nbase          # NX = NZ = Nbase  |
+|   872 |        |       |       |    NX_full = S.NX_full        # 3*N/2      |
+|   873 |        |       |       |    NZ_full = S.NZ_full        # 3*N/2      |
+|   874 |        |       |       |    NK_full = S.NK_full        # 3*N/4+1    |
+|   875 |        |       |       |                                            |
+|   876 |        |       |       |    UR = S.ur_full                          |
+|   877 |        |       |       |    UC = S.uc_full                          |
+|   878 |        |       |       |                                            |
+|   879 |        |       |       |    u = UR[0]   # (NZ_full, NX_full)        |
+|   880 |        |       |       |    w = UR[1]   # (NZ_full, NX_full)        |
+|   881 |        |       |       |                                            |
+|   882 |        |       |       |    # Use in-place multiplies to avoid temp |
+|   883 |        |       |       |    xp.multiply(u, w, out=UR[2])  # u * w   |
+|   884 |        |       |       |    xp.multiply(u, u, out=UR[0])  # u^2     |
+|   885 |        |       |       |    xp.multiply(w, w, out=UR[1])  # w^2     |
+|   886 |        |       |       |                                            |
+|   887 |        |       |       |    vfft_full_forward_ur_full_to_uc_full(S) |
+|   888 |        |       |       |                                            |
+|   889 |        |       |       |    NX_half = N // 2                        |
+|   890 |        |       |       |    NZ = N                                  |
+|   891 |        |       |       |    z_mid = NZ                              |
+|   892 |        |       |       |                                            |
+|   893 |        |       |       |    kx_max = min(NX_half, NK_full)          |
+|   894 |        |       |       |                                            |
+|   895 |        |       |       |    if z_mid < NZ_full and kx_max > 0:      |
+|   896 |        |       |       |        UC[0:3, z_mid, 0:kx_max] = xp.compl |
+|   897 |        |       |       |                                            |
+|   898 |        |       |       |                                            |
+|   899 |        |       |       |# ----------------------------------------- |
+|   900 |        |       |       |# STEP3 â€” vorticity update using om2 & fn |
+|   901 |        |       |       |# ----------------------------------------- |
+|   902 |        |       |       |def dns_step3(S: DnsState) -> None:         |
+|   903 |        |       |       |    xp = S.xp                               |
+|   904 |        |       |       |                                            |
+|   905 |        |       |       |    om2 = S.om2                             |
+|   906 |        |       |       |    fnm1 = S.fnm1                           |
+|   907 |        |       |       |    alfa = S.alfa                           |
+|   908 |        |       |       |    gamma = S.gamma                         |
+|   909 |        |       |       |    uc_full = S.uc_full                     |
+|   910 |        |       |       |                                            |
+|   911 |        |       |       |    Nbase = int(S.Nbase)                    |
+|   912 |        |       |       |    NX_half = Nbase // 2                    |
+|   913 |        |       |       |    NZ = Nbase                              |
+|   914 |        |       |       |                                            |
+|   915 |        |       |       |    visc = xp.float32(S.visc)               |
+|   916 |        |       |       |    dt = xp.float32(S.dt)                   |
+|   917 |        |       |       |    cn = xp.float32(S.cn)                   |
+|   918 |        |       |       |    cnm1 = xp.float32(S.cnm1)               |
+|   919 |        |       |       |                                            |
+|   920 |        |       |       |    z_spec = S.step3_z_spec                 |
+|   921 |        |       |       |    divxz = S.step3_divxz                   |
+|   922 |        |       |       |    GA = S.step3_GA                         |
+|   923 |        |       |       |    G2mA2 = S.step3_G2mA2                   |
+|   924 |        |       |       |    K2 = S.step3_K2                         |
+|   925 |        |       |       |                                            |
+|   926 |        |       |       |    uc0_low = uc_full[0, :, :NX_half]       |
+|   927 |        |       |       |    uc1_low = uc_full[1, :, :NX_half]       |
+|   928 |        |       |       |    uc2_low = uc_full[2, :, :NX_half]       |
+|   929 |        |       |       |                                            |
+|   930 |        |       |       |    uc1_th = S.step3_uc1_th                 |
+|   931 |        |       |       |    uc2_th = S.step3_uc2_th                 |
+|   932 |        |       |       |    uc3_th = S.step3_uc3_th                 |
+|   933 |        |       |       |    xp.take(uc0_low, z_spec, axis=0, out=uc |
+|   934 |        |       |       |    xp.take(uc1_low, z_spec, axis=0, out=uc |
+|   935 |        |       |       |    xp.take(uc2_low, z_spec, axis=0, out=uc |
+|   936 |        |       |       |                                            |
+|   937 |        |       |       |    tmp_FN = S.scratch1                     |
+|   938 |        |       |       |    tmp_c = S.scratch2                      |
+|   939 |        |       |       |    xp.subtract(uc1_th, uc2_th, out=tmp_FN) |
+|   940 |        |       |       |    xp.multiply(tmp_FN, GA, out=tmp_FN)     |
+|   941 |        |       |       |    xp.multiply(uc3_th, G2mA2, out=tmp_c)   |
+|   942 |        |       |       |    xp.add(tmp_FN, tmp_c, out=tmp_FN)       |
+|   943 |        |       |       |    tmp_FN *= divxz                         |
+|   944 |        |       |       |                                            |
+|   945 |        |       |       |    VT = xp.float32(0.5) * visc * dt        |
+|   946 |        |       |       |    ARG = S.step3_ARG                       |
+|   947 |        |       |       |    DEN = S.step3_DEN                       |
+|   948 |        |       |       |    xp.multiply(K2, VT, out=ARG)            |
+|   949 |        |       |       |    xp.add(ARG, xp.float32(1.0), out=DEN)   |
+|   950 |        |       |       |                                            |
+|   951 |        |       |       |    c2 = xp.float32(0.5) * dt * (xp.float32 |
+|   952 |        |       |       |    c3 = -xp.float32(0.5) * dt * cnm1       |
+|   953 |        |       |       |                                            |
+|   954 |        |       |       |    NUM = S.step3_NUM                       |
+|   955 |        |       |       |    NUM[...] = om2                          |
+|   956 |        |       |   2%  |    xp.multiply(om2, ARG, out=tmp_c)        |
+|   957 |        |       |       |    NUM -= tmp_c                            |
+|   958 |        |       |       |                                            |
+|   959 |        |       |       |    xp.multiply(tmp_FN, c2, out=tmp_c)      |
+|   960 |        |       |       |    NUM += tmp_c                            |
+|   961 |        |       |       |    xp.multiply(fnm1, c3, out=tmp_c)        |
+|   962 |        |       |       |    NUM += tmp_c                            |
+|   963 |        |       |       |                                            |
+|   964 |        |       |       |    xp.divide(NUM, DEN, out=om2)            |
+|   965 |        |       |       |                                            |
+|   966 |        |       |       |    fnm1[...] = tmp_FN                      |
+|   967 |        |       |       |                                            |
+|   968 |        |       |       |    out1 = S.scratch1                       |
+|   969 |        |       |       |    out2 = S.scratch2                       |
+|   970 |        |       |       |    out1[...] = 0                           |
+|   971 |        |       |       |    out2[...] = 0                           |
+|   972 |        |       |       |                                            |
+|   973 |        |       |       |    if NX_half > 1:                         |
+|   974 |        |       |       |        invK2_sub = S.step3_invK2_sub       |
+|   975 |        |       |       |                                            |
+|   976 |        |       |       |        out1[:, 1:] = om2[:, 1:]            |
+|   977 |        |       |       |        out1[:, 1:] *= invK2_sub            |
+|   978 |        |       |       |        out1[:, 1:] *= gamma[:, None]       |
+|   979 |        |       |       |        out1[:, 1:] *= xp.complex64(-1.0j)  |
+|   980 |        |       |       |                                            |
+|   981 |        |       |       |        out2[:, 1:] = om2[:, 1:]            |
+|   982 |        |       |       |        out2[:, 1:] *= invK2_sub            |
+|   983 |        |       |       |        out2[:, 1:] *= alfa[1:][None, :]    |
+|   984 |        |       |       |        out2[:, 1:] *= xp.complex64(1.0j)   |
+|   985 |        |       |       |                                            |
+|   986 |        |       |       |    # GPU-optimized ix=0 branch: no fancy i |
+|   987 |        |       |       |    out1[:, 0] = 0                          |
+|   988 |        |       |       |    out1[:, 0] = xp.complex64(-1.0j) * om2[ |
+|   989 |        |       |       |                                            |
+|   990 |        |       |       |    uc_full[0, :NZ, :NX_half] = out1        |
+|   991 |        |       |       |    uc_full[1, :NZ, :NX_half] = out2        |
+|   992 |        |       |       |                                            |
+|   993 |        |       |       |    S.cnm1 = float(cn)                      |
+|   994 |        |       |       |                                            |
+|   995 |        |       |       |                                            |
+|   996 |        |       |       |# ========================================= |
+|   997 |        |       |       |# STEP2A core (dealias + reshuffle + invers |
+|   998 |        |       |       |# ========================================= |
+|   999 |        |       |       |def dns_step2a(S: DnsState) -> None:        |
+|  1000 |        |       |       |    xp = S.xp                               |
+|  1001 |        |       |       |    N = S.Nbase                             |
+|  1002 |        |       |       |    NX = S.NX                               |
+|  1003 |        |       |       |    NZ = S.NZ                               |
+|  1004 |        |       |       |    NX_full = S.NX_full                     |
+|  1005 |        |       |       |    NZ_full = S.NZ_full                     |
+|  1006 |        |       |       |    NK_full = S.NK_full                     |
+|  1007 |        |       |       |                                            |
+|  1008 |        |       |       |    UC = S.uc_full                          |
+|  1009 |        |       |       |                                            |
+|  1010 |        |       |       |    hi_start = N // 2                       |
+|  1011 |        |       |       |    hi_end = min(3 * N // 4, NK_full - 1)   |
+|  1012 |        |       |       |    if hi_start <= hi_end:                  |
+|  1013 |        |       |       |        UC[0:2, :, hi_start:hi_end + 1] = x |
+|  1014 |        |       |       |                                            |
+|  1015 |        |       |       |    halfN = N // 2                          |
+|  1016 |        |       |       |    k_max = min(halfN, NK_full)             |
+|  1017 |        |       |       |    if k_max > 0:                           |
+|  1018 |        |       |       |        z_mid_start = halfN                 |
+|  1019 |        |       |       |        z_mid_end = N                       |
+|  1020 |        |       |       |        z_top_start = N                     |
+|  1021 |        |       |       |        z_top_end = N + halfN               |
+|  1022 |        |       |       |        UC[0:2, z_top_start:z_top_end, :k_m |
+|  1023 |        |       |   1%  |        UC[0:2, z_mid_start:z_mid_end, :k_m |
+|  1024 |        |       |       |                                            |
+|  1025 |        |       |       |    fft = S.fft                             |
+|  1026 |        |       |       |    if fft is None:                         |
+|  1027 |        |       |       |        raise RuntimeError("scipy.fft is no |
+|  1028 |        |       |       |                                            |
+|  1029 |        |       |       |    UC01 = UC[0:2, :, :]                    |
+|  1030 |        |       |       |                                            |
+|  1031 |        |       |       |    if S.backend == "cpu":                  |
+|  1032 |        |       |       |        ur01 = fft.irfft2(UC01, s=(NZ_full, |
+|  1033 |        |       |       |    else:                                   |
+|  1034 |        |       |       |        plan = S.fft_plan_irfft2_uc01       |
+|  1035 |        |       |       |        if plan is not None:                |
+|  1036 |        |       |       |            with plan:                      |
+|  1037 |    2%  |       |  10%  |                ur01 = fft.irfft2(UC01, s=( |
+|  1038 |        |       |       |        else:                               |
+|  1039 |        |       |       |            ur01 = fft.irfft2(UC01, s=(NZ_f |
+|  1040 |        |       |       |                                            |
+|  1041 |        |       |       |    ur01 *= xp.float32(NZ_full * NX_full)   |
+|  1042 |        |       |       |                                            |
+|  1043 |        |       |       |    S.ur_full[0:2, :, :] = ur01             |
+|  1044 |        |       |       |    S.ur_full[2, :, :] = xp.float32(0.0)    |
+|  1045 |        |       |       |                                            |
+|  1046 |        |       |       |    off_x = (NX_full - NX) // 2             |
+|  1047 |        |       |       |    off_z = (NZ_full - NZ) // 2             |
+|  1048 |        |       |       |                                            |
+|  1049 |        |       |       |    S.ur[:, :, 0] = S.ur_full[0, off_z:off_ |
+|  1050 |        |       |       |    S.ur[:, :, 1] = S.ur_full[1, off_z:off_ |
+|  1051 |        |       |       |    S.ur[:, :, 2] = 0.0                     |
+|  1052 |        |       |       |                                            |
+|  1053 |        |       |       |                                            |
+|  1054 |        |       |       |# ----------------------------------------- |
+|  1055 |        |       |       |# NEXTDT â€” CFL based timestep             |
+|  1056 |        |       |       |# ----------------------------------------- |
+|  1057 |        |       |       |                                            |
+|  1058 |        |       |       |def compute_cflm(S: DnsState):              |
+|  1059 |        |       |       |    xp = S.xp                               |
+|  1060 |        |       |       |                                            |
+|  1061 |        |       |       |    NX3D2 = S.NX_full                       |
+|  1062 |        |       |       |    NZ3D2 = S.NZ_full                       |
+|  1063 |        |       |       |                                            |
+|  1064 |        |       |       |    u = S.ur_full[0, :NZ3D2, :NX3D2]        |
+|  1065 |        |       |       |    w = S.ur_full[1, :NZ3D2, :NX3D2]        |
+|  1066 |        |       |       |                                            |
+|  1067 |        |       |       |    tmp = S.cfl_tmp[:NZ3D2, :NX3D2]         |
+|  1068 |        |       |       |    absw = S.cfl_absw[:NZ3D2, :NX3D2]       |
+|  1069 |        |       |       |                                            |
+|  1070 |        |       |       |    xp.abs(u, out=tmp)                      |
+|  1071 |        |       |       |    xp.abs(w, out=absw)                     |
+|  1072 |        |       |       |    xp.add(tmp, absw, out=tmp)              |
+|  1073 |        |       |       |                                            |
+|  1074 |    2%  |       |   5%  |    CFLM = xp.max(tmp) * S.inv_dx           |
+|  1075 |        |       |       |    if S.backend == "cpu":                  |
+|  1076 |        |       |       |        return float(CFLM)                  |
+|  1077 |        |       |       |                                            |
+|  1078 |        |       |       |    return CFLM                             |
+|  1079 |        |       |       |                                            |
+|  1080 |        |       |       |                                            |
+|  1081 |        |       |       |def next_dt(S: DnsState) -> None:           |
+|  1082 |        |       |       |    PI = math.pi                            |
+|  1083 |        |       |       |    CFLM = compute_cflm(S)                  |
+|  1084 |        |       |       |                                            |
+|  1085 |        |       |       |    if S.backend == "gpu":                  |
+|  1086 |   12%  |    3% |  36%  |        CFLM = float(CFLM)  # one sync here |
+|  1087 |        |       |       |                                            |
+|  1088 |        |       |       |    if CFLM <= 0.0 or S.dt <= 0.0:          |
+|  1089 |        |       |       |        return                              |
+|  1090 |        |       |       |                                            |
+|  1091 |        |       |       |    CFL = CFLM * S.dt * PI                  |
+|  1092 |        |       |       |    S.cn = 0.8 + 0.2 * (S.cflnum / CFL)     |
+|  1093 |        |       |       |    S.dt = S.dt * S.cn                      |
+|  1094 |        |       |       |                                            |
+|  1095 |        |       |       |                                            |
+|  1096 |        |       |       |# ========================================= |
+|  1097 |        |       |       |# Python equivalent of dnsCudaDumpFieldAsPG |
+|  1098 |        |       |       |# ========================================= |
+|  1099 |        |       |       |def dump_field_as_pgm_full(S: DnsState, com |
+|  1100 |        |       |       |    NX_full = S.NX_full                     |
+|  1101 |        |       |       |    NZ_full = S.NZ_full                     |
+|  1102 |        |       |       |                                            |
+|  1103 |        |       |       |    if S.backend == "gpu":                  |
+|  1104 |        |       |       |        ur_full_host = _np.asarray(S.ur_ful |
+|  1105 |        |       |       |    else:                                   |
+|  1106 |        |       |       |        ur_full_host = _np.asarray(S.ur_ful |
+|  1107 |        |       |       |                                            |
+|  1108 |        |       |       |    field = ur_full_host[comp, :, :]        |
+|  1109 |        |       |       |                                            |
+|  1110 |        |       |       |    minv = float(field.min())               |
+|  1111 |        |       |       |    maxv = float(field.max())               |
+|  1112 |        |       |       |                                            |
+|  1113 |        |       |       |    try:                                    |
+|  1114 |        |       |       |        f = open(filename, "wb")            |
+|  1115 |        |       |       |    except OSError as e:                    |
+|  1116 |        |       |       |        print(f"[DUMP] fopen failed for {fi |
+|  1117 |        |       |       |        return                              |
+|  1118 |        |       |       |                                            |
+|  1119 |        |       |       |    header = f"P5\n{NX_full} {NZ_full}\n255 |
+|  1120 |        |       |       |    f.write(header.encode("ascii"))         |
+|  1121 |        |       |       |                                            |
+|  1122 |        |       |       |    rng = maxv - minv                       |
+|  1123 |        |       |       |                                            |
+|  1124 |        |       |       |    if abs(rng) <= 1.0e-12:                 |
+|  1125 |        |       |       |        c = bytes([128])                    |
+|  1126 |        |       |       |        row = c * NX_full                   |
+|  1127 |        |       |       |        for _ in range(NZ_full):            |
+|  1128 |        |       |       |            f.write(row)                    |
+|  1129 |        |       |       |    else:                                   |
+|  1130 |        |       |       |        for j in range(NZ_full):            |
+|  1131 |        |       |       |            for i in range(NX_full):        |
+|  1132 |        |       |       |                val = float(field[j, i])    |
+|  1133 |        |       |       |                norm = (val - minv) / rng   |
+|  1134 |        |       |       |                pixf = 1.0 + norm * 254.0   |
+|  1135 |        |       |       |                pix = int(pixf + 0.5)       |
+|  1136 |        |       |       |                if pix < 1:                 |
+|  1137 |        |       |       |                    pix = 1                 |
+|  1138 |        |       |       |                if pix > 255:               |
+|  1139 |        |       |       |                    pix = 255               |
+|  1140 |        |       |       |                f.write(bytes([pix]))       |
+|  1141 |        |       |       |                                            |
+|  1142 |        |       |       |    f.close()                               |
+|  1143 |        |       |       |    print(f"[DUMP] Wrote {filename} (PGM, { |
+|  1144 |        |       |       |          f"comp={comp}, min={minv:g}, max= |
+|  1145 |        |       |       |                                            |
+|  1146 |        |       |       |                                            |
+|  1147 |        |       |       |# ----------------------------------------- |
+|  1148 |        |       |       |# Helpers for visualization fields (energy, |
+|  1149 |        |       |       |# ----------------------------------------- |
+|  1150 |        |       |       |                                            |
+|  1151 |        |       |       |def dns_kinetic(S: DnsState) -> None:       |
+|  1152 |        |       |       |    xp = S.xp                               |
+|  1153 |        |       |       |                                            |
+|  1154 |        |       |       |    u = S.ur_full[0, :, :]                  |
+|  1155 |        |       |       |    w = S.ur_full[1, :, :]                  |
+|  1156 |        |       |       |                                            |
+|  1157 |        |       |       |    ke = xp.sqrt(u * u + w * w)             |
+|  1158 |        |       |       |    S.ur_full[2, :, :] = ke.astype(xp.float |
+|  1159 |        |       |       |                                            |
+|  1160 |        |       |       |                                            |
+|  1161 |        |       |       |def _spectral_band_to_phys_full_grid(S: Dns |
+|  1162 |        |       |       |    xp = S.xp                               |
+|  1163 |        |       |       |                                            |
+|  1164 |        |       |       |    N = S.Nbase                             |
+|  1165 |        |       |       |    NX_full = S.NX_full                     |
+|  1166 |        |       |       |    NZ_full = S.NZ_full                     |
+|  1167 |        |       |       |    NK_full = S.NK_full                     |
+|  1168 |        |       |       |                                            |
+|  1169 |        |       |       |    NX_half = N // 2                        |
+|  1170 |        |       |       |    NZ = N                                  |
+|  1171 |        |       |       |                                            |
+|  1172 |        |       |       |    uc_tmp = xp.zeros((NZ_full, NK_full), d |
+|  1173 |        |       |       |    uc_tmp[:NZ, :NX_half] = band            |
+|  1174 |        |       |       |                                            |
+|  1175 |        |       |       |    hi_start = N // 2                       |
+|  1176 |        |       |       |    hi_end = min(3 * N // 4, NK_full - 1)   |
+|  1177 |        |       |       |    if hi_start <= hi_end:                  |
+|  1178 |        |       |       |        uc_tmp[:, hi_start:hi_end + 1] = xp |
+|  1179 |        |       |       |                                            |
+|  1180 |        |       |       |    halfN = N // 2                          |
+|  1181 |        |       |       |    k_max = min(halfN, NK_full)             |
+|  1182 |        |       |       |                                            |
+|  1183 |        |       |       |    if k_max > 0:                           |
+|  1184 |        |       |       |        z_mid_start = halfN                 |
+|  1185 |        |       |       |        z_mid_end = halfN + halfN           |
+|  1186 |        |       |       |        z_top_start = N                     |
+|  1187 |        |       |       |        z_top_end = N + halfN               |
+|  1188 |        |       |       |                                            |
+|  1189 |        |       |       |        uc_tmp[z_top_start:z_top_end, :k_ma |
+|  1190 |        |       |       |        uc_tmp[z_mid_start:z_mid_end, :k_ma |
+|  1191 |        |       |       |                                            |
+|  1192 |        |       |       |    z_mid = NZ                              |
+|  1193 |        |       |       |    if z_mid < NZ_full:                     |
+|  1194 |        |       |       |        uc_tmp[z_mid, :NX_half] = xp.comple |
+|  1195 |        |       |       |                                            |
+|  1196 |        |       |       |    fft = S.fft                             |
+|  1197 |        |       |       |    if fft is None:                         |
+|  1198 |        |       |       |        raise RuntimeError("scipy.fft is no |
+|  1199 |        |       |       |                                            |
+|  1200 |        |       |       |    if S.backend == "cpu":                  |
+|  1201 |        |       |       |        phys = fft.irfft2(uc_tmp, s=(NZ_ful |
+|  1202 |        |       |       |    else:                                   |
+|  1203 |        |       |       |        phys = fft.irfft2(uc_tmp, s=(NZ_ful |
+|  1204 |        |       |       |                                            |
+|  1205 |        |       |       |    phys *= (NZ_full * NX_full)             |
+|  1206 |        |       |       |    return xp.asarray(phys, dtype=xp.float3 |
+|  1207 |        |       |       |                                            |
+|  1208 |        |       |       |                                            |
+|  1209 |        |       |       |def dns_om2_phys(S: DnsState) -> None:      |
+|  1210 |        |       |       |    band = S.om2                            |
+|  1211 |        |       |       |    phys = _spectral_band_to_phys_full_grid |
+|  1212 |        |       |       |    S.ur_full[2, :, :] = phys               |
+|  1213 |        |       |       |                                            |
+|  1214 |        |       |       |                                            |
+|  1215 |        |       |       |def dns_stream_func(S: DnsState) -> None:   |
+|  1216 |        |       |       |    xp = S.xp                               |
+|  1217 |        |       |       |                                            |
+|  1218 |        |       |       |    N = S.Nbase                             |
+|  1219 |        |       |       |    NX_half = N // 2                        |
+|  1220 |        |       |       |    NZ = N                                  |
+|  1221 |        |       |       |                                            |
+|  1222 |        |       |       |    alfa_1d = S.alfa.astype(xp.float32)     |
+|  1223 |        |       |       |    gamma_1d = S.gamma.astype(xp.float32)   |
+|  1224 |        |       |       |                                            |
+|  1225 |        |       |       |    ax = alfa_1d[None, :]                   |
+|  1226 |        |       |       |    gz = gamma_1d[:, None]                  |
+|  1227 |        |       |       |                                            |
+|  1228 |        |       |       |    K2 = ax * ax + gz * gz                  |
+|  1229 |        |       |       |    K2 = K2 + xp.float32(1.0e-30)           |
+|  1230 |        |       |       |                                            |
+|  1231 |        |       |       |    phi_hat = S.om2 / K2                    |
+|  1232 |        |       |       |    phys = _spectral_band_to_phys_full_grid |
+|  1233 |        |       |       |    S.ur_full[2, :, :] = phys               |
+|  1234 |        |       |       |                                            |
+|  1235 |        |       |       |                                            |
+|  1236 |        |       |       |# ----------------------------------------- |
+|  1237 |        |       |       |# Main driver (Python version of main in dn |
+|  1238 |        |       |       |# ----------------------------------------- |
+|  1239 |        |       |       |def run_dns(                                |
+|  1240 |        |       |       |    N: int = 8,                             |
+|  1241 |        |       |       |    Re: float = 100,                        |
+|  1242 |        |       |       |    K0: float = 10.0,                       |
+|  1243 |        |       |       |    STEPS: int = 2,                         |
+|  1244 |        |       |       |    CFL: float = 0.75,                      |
+|  1245 |        |       |       |    backend: Literal["cpu", "gpu", "auto"]  |
+|  1246 |        |       |       |) -> None:                                  |
+|  1247 |        |       |       |    print("--- RUN DNS ---")                |
+|  1248 |        |       |       |    print(f" N   = {N}")                    |
+|  1249 |        |       |       |    print(f" Re  = {Re}")                   |
+|  1250 |        |       |       |    print(f" K0  = {K0}")                   |
+|  1251 |        |       |       |    print(f" Steps = {STEPS}")              |
+|  1252 |        |       |       |    print(f" CFL  = {CFL}")                 |
+|  1253 |        |       |       |    print(f" requested = {backend}")        |
+|  1254 |        |       |       |                                            |
+|  1255 |        |       |       |    S = create_dns_state(N=N, Re=Re, K0=K0, |
+|  1256 |        |       |       |    print(f" effective = {S.backend} (xp =  |
+|  1257 |        |       |       |                                            |
+|  1258 |        |       |       |    if S.backend == "cpu" and _spfft is not |
+|  1259 |        |       |       |        fft_ctx = _spfft.set_workers(S.fft_ |
+|  1260 |        |       |       |    else:                                   |
+|  1261 |        |       |       |        fft_ctx = nullcontext()             |
+|  1262 |        |       |       |                                            |
+|  1263 |        |       |       |    with fft_ctx:                           |
+|  1264 |        |       |       |        if _spfft is not None:              |
+|  1265 |        |       |       |            print(f" scipy.fft workers in-c |
+|  1266 |        |       |       |        else:                               |
+|  1267 |        |       |       |            print(" scipy.fft workers in-co |
+|  1268 |        |       |       |                                            |
+|  1269 |        |       |       |        dns_step2a(S)                       |
+|  1270 |        |       |       |                                            |
+|  1271 |        |       |       |        CFLM = compute_cflm(S)              |
+|  1272 |        |       |       |        if S.backend == "gpu":              |
+|  1273 |        |       |       |            CFLM0 = float(CFLM)  # one sync |
+|  1274 |        |       |       |        else:                               |
+|  1275 |        |       |       |            CFLM0 = CFLM                    |
+|  1276 |        |       |       |                                            |
+|  1277 |        |       |       |        S.dt = S.cflnum / (CFLM0 * math.pi) |
+|  1278 |        |       |       |        S.cn = 1.0                          |
+|  1279 |        |       |       |        S.cnm1 = 0.0                        |
+|  1280 |        |       |       |        S.t = 0.0                           |
+|  1281 |        |       |       |                                            |
+|  1282 |        |       |       |        print(f" [NEXTDT INIT] CFLM={CFLM:1 |
+|  1283 |        |       |       |        print(f" Initial DT={S.dt:11.7f} CN |
+|  1284 |        |       |       |                                            |
+|  1285 |        |       |       |        S.sync()                            |
+|  1286 |        |       |       |        t0 = time.perf_counter()            |
+|  1287 |        |       |       |                                            |
+|  1288 |        |       |       |        for it in range(1, STEPS + 1):      |
+|  1289 |        |       |       |            S.it = it                       |
+|  1290 |        |       |       |                                            |
+|  1291 |        |       |       |            dt_old = S.dt                   |
+|  1292 |        |       |       |                                            |
+|  1293 |        |       |       |            dns_step2b(S)                   |
+|  1294 |        |       |       |            dns_step3(S)                    |
+|  1295 |        |       |       |            dns_step2a(S)                   |
+|  1296 |        |       |       |                                            |
+|  1297 |        |       |       |            next_dt(S)                      |
+|  1298 |        |       |       |            S.t += dt_old                   |
+|  1299 |        |       |       |                                            |
+|  1300 |        |       |       |            if (it % 100) == 0 or it == 1 o |
+|  1301 |        |       |       |                print(f" ITERATION {it:6d}  |
+|  1302 |        |       |       |                                            |
+|  1303 |        |       |       |        S.sync()                            |
+|  1304 |        |       |       |        t1 = time.perf_counter()            |
+|  1305 |        |       |       |                                            |
+|  1306 |        |       |       |        elap = t1 - t0                      |
+|  1307 |        |       |       |        fps = (STEPS / elap) if elap > 0 el |
+|  1308 |        |       |       |                                            |
+|  1309 |        |       |       |        print(f" Elapsed CPU time for {STEP |
+|  1310 |        |       |       |        print(f" Final T={S.t:8g}  CN={S.cn |
+|  1311 |        |       |       |        print(f" FPS = {fps:7g}")           |
+|  1312 |        |       |       |                                            |
+|  1313 |        |       |       |def main():                                 |
+|  1314 |        |       |       |    args = sys.argv[1:]                     |
+|  1315 |        |       |       |    N = int(args[0]) if len(args) > 0 else  |
+|  1316 |        |       |       |    Re = float(args[1]) if len(args) > 1 el |
+|  1317 |        |       |       |    K0 = float(args[2]) if len(args) > 2 el |
+|  1318 |        |       |       |    STEPS = int(args[3]) if len(args) > 3 e |
+|  1319 |        |       |       |    CFL = float(args[4]) if len(args) > 4 e |
+|  1320 |        |       |       |                                            |
+|  1321 |        |       |       |    BACK = args[5].lower() if len(args) > 5 |
+|  1322 |        |       |       |    if BACK not in ("cpu", "gpu", "auto"):  |
+|  1323 |        |       |       |        BACK = "auto"                       |
+|  1324 |        |       |       |                                            |
+|  1325 |        |       |       |    run_dns(N=N, Re=Re, K0=K0, STEPS=STEPS, |
+|  1326 |        |       |       |                                            |
+|  1327 |        |       |       |                                            |
+|  1328 |        |       |       |if __name__ == "__main__":                  |
+|  1329 |        |       |       |    main()                                  |
+|       |        |       |       |                                            |
+|-------+--------+-------+-------+--------------------------------------------|
+|       |        |       |       |function summary for C:\Users\tobbe\python… |
+|    79 |        |       |       |frand                                       |
+|   304 |        |       |       |create_dns_state                            |
+|   476 |    2%  |    5% |       |dns_pao_host_init                           |
+|   533 |        |       |       |dns_pao_host_init.<locals>.random_from_vec  |
+|   746 |        |       |       |vfft_full_inverse_uc_full_to_ur_full        |
+|   769 |        |       |       |vfft_full_forward_ur_full_to_uc_full        |
+|   804 |        |       |       |dns_calcom_from_uc_full                     |
+|   857 |        |       |   1%  |dns_step2b                                  |
+|   902 |    2%  |       |   6%  |dns_step3                                   |
+|   999 |    3%  |       |  14%  |dns_step2a                                  |
+|  1058 |    2%  |       |   7%  |compute_cflm                                |
+|  1081 |   12%  |    3% |  36%  |next_dt                                     |
+|  1239 |        |       |       |run_dns                                     |
++-----------------------------------------------------------------------------+

@@ -28,11 +28,11 @@ The 3/2 de-aliasing, Crank–Nicolson update, and spectral vorticity
 formulas follow the CUDA kernels line-by-line.
 """
 from contextlib import nullcontext
-from dataclasses import dataclass
+import time
 import datetime as _dt
 import math
 import sys
-import time
+from dataclasses import dataclass
 from typing import Literal
 
 import numpy as _np
@@ -522,7 +522,6 @@ def create_dns_state(
     CFL: float = 0.75,
     backend: Literal["cpu", "gpu", "auto"] = "auto",
     seed: int = 1,
-    skip_pao: bool = False,
 ) -> DnsState:
     xp = get_xp(backend)
 
@@ -617,7 +616,7 @@ def create_dns_state(
         print(f"FFT workers (CPU): {state.fft_workers}")
 
     # PAO-style initialization (dnsCudaPaoHostInit)
-    dns_pao_host_init(state, skip_pao=skip_pao)
+    dns_pao_host_init(state)
 
     # DT and CN will be initialized in run_dns via CFL (like CUDA)
     state.dt = 0.0
@@ -687,7 +686,7 @@ def create_dns_state(
 # ===============================================================
 # Python/Numpy/Scipy port of dnsCudaPaoHostInit, wired into DnsState
 # ===============================================================
-def dns_pao_host_init(S: DnsState, skip_pao: bool = False):
+def dns_pao_host_init(S: DnsState):
     xp = S.xp
     N = S.NX
     NE = S.NZ
@@ -700,7 +699,7 @@ def dns_pao_host_init(S: DnsState, skip_pao: bool = False):
     NORM = PI * K0 * K0
 
     print("--- INITIALIZING SciPy/CuPy ---", _dt.datetime.now().strftime("%Y-%m-%d %H:%M"))
-    print(f" N={N}, K0={int(K0)}, Re={S.Re:,.1f}")
+    print(f" N={N}, K0={int(K0)}, Re={S.Re:.4e}")
 
     # ------------------------------------------------------------------
     # Build ALFA(N/2) and GAMMA(N)  (Fortran DALFA, DGAMMA, E1, E3)
@@ -721,15 +720,6 @@ def dns_pao_host_init(S: DnsState, skip_pao: bool = False):
     for z in range(1, NED2 + 1):
         gamma[z] = np.float32(z) * DGAMMA
         gamma[NE - z] = -gamma[z]
-
-    # When loading a saved case we only need alfa/gamma; skip the
-    # expensive random-spectrum generation whose results will be
-    # overwritten by the parquet data anyway.
-    if skip_pao:
-        S.alfa = xp.asarray(alfa, dtype=xp.float32)
-        S.gamma = xp.asarray(gamma, dtype=xp.float32)
-        print(" PAO spectrum skipped (loading saved case)")
-        return
 
     # ------------------------------------------------------------------
     # Host spectral UR: complex field UR(kx,z,comp)
@@ -848,14 +838,14 @@ def dns_pao_host_init(S: DnsState, skip_pao: bool = False):
     S.uc_full[...] = xp.transpose(UC_full_xp, (2, 1, 0))  # (3,NZ_full,NK_full)
 
     # ------------------------------------------------------------------
-    # Build initial om2 from UC_full (for the rest of the solver)
+    # Build initial UR_full & om2 from UC_full (for the rest of the solver)
     # ------------------------------------------------------------------
-    # Spectral vorticity from pristine UC_full. Callers always run dns_step2a
-    # immediately after create_dns_state, which dealiases UC_full[0:2] and
-    # runs the inverse FFT — so there is no need to populate UR_full here.
-    # (Avoiding the extra inverse FFT also keeps UC_full[0:2] pristine: the
-    # GPU inverse path now writes directly into ur_full[0:2] via plan.fft,
-    # which lets cuFFT clobber its input buffer.)
+    # Inverse transform UC_full → UR_full for diagnostics / STEP2B input
+    print(f" vfft_full_inverse_uc_full_to_ur_full(S)")
+    vfft_full_inverse_uc_full_to_ur_full(S)
+
+    # Spectral vorticity from UC_full, like dnsCudaCalcom
+    #print(f" dns_calcom_from_uc_full(S)")
     dns_calcom_from_uc_full(S)
 
     # No history yet
@@ -867,27 +857,25 @@ def dns_pao_host_init(S: DnsState, skip_pao: bool = False):
 # ---------------------------------------------------------------------------
 
 def vfft_full_inverse_uc_full_to_ur_full(S: DnsState) -> None:
+    xp = S.xp
     UC = S.uc_full
     fft = S.fft
 
     UC01 = UC[0:2, :, :]
 
-    # norm='forward' skips the default 1/N irfft2 scaling so we get the
-    # unnormalized result directly — saves one full pass over ur_full.
     if S.backend == "cpu":
-        ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True, norm='forward')
-        S.ur_full[0:2, :, :] = ur01
+        ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True)
     else:
         plan = S.fft_plan_irfft2_uc01
         if plan is not None:
-            # Execute the C2R plan directly into ur_full[0:2]. This bypasses
-            # cupyx.scipy.fft.irfft2's internal allocation + copy of the FFT
-            # output into our pre-allocated ur_full slice — the dominant cost
-            # at large N. Raw cuFFT applies no scaling, matching norm='forward'.
-            plan.fft(UC01, S.ur_full[0:2], _cp.cuda.cufft.CUFFT_INVERSE)
+            ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2), plan=plan)
         else:
-            ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2), norm='forward')
-            S.ur_full[0:2, :, :] = ur01
+            ur01 = fft.irfft2(UC01, s=(S.NZ_full, S.NX_full), axes=(1, 2))
+
+    # Match previous STEP2A behavior exactly: scale BEFORE float32 cast/assign.
+    scale = xp.float32(S.NZ_full * S.NX_full)
+    xp.multiply(ur01, scale, out=S.ur_full[0:2, :, :])
+    S.ur_full[2, :, :] = xp.float32(0.0)
 
 
 def vfft_full_forward_ur_full_to_uc_full(S: DnsState) -> None:
@@ -907,16 +895,15 @@ def vfft_full_forward_ur_full_to_uc_full(S: DnsState) -> None:
     if S.backend == "cpu":
         # overwrite_x is safe here (UR_full is overwritten later by STEP2A anyway)
         UC = fft.rfft2(UR, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True, workers=S.fft_workers)
-        S.uc_full[...] = UC
     else:
         plan = S.fft_plan_rfft2_ur_full
         if plan is not None:
-            # Execute the R2C plan directly into uc_full. Skips the internal
-            # allocation + copy that cupyx.scipy.fft.rfft2 would do.
-            plan.fft(UR, S.uc_full, _cp.cuda.cufft.CUFFT_FORWARD)
+            UC = fft.rfft2(UR, s=(S.NZ_full, S.NX_full), axes=(1, 2), plan=plan, overwrite_x=True)
         else:
             UC = fft.rfft2(UR, s=(S.NZ_full, S.NX_full), axes=(1, 2), overwrite_x=True)
-            S.uc_full[...] = UC
+
+    # Assign back; uc_full is complex64, assignment will down-cast if needed
+    S.uc_full[...] = UC
 
 
 # ---------------------------------------------------------------------------
@@ -1106,7 +1093,7 @@ def dns_step3(S: DnsState, fuse: bool = True) -> None:
                 const float* inv_gamma0,
                 complex<float>* out1,
                 complex<float>* out2,
-                int NX_half, int NZ, int NK_full
+                int NX_half, int NZ
             ) {
                 int idx = (int)(blockIdx.x * blockDim.x + threadIdx.x);
                 int n = NZ * NX_half;
@@ -1139,9 +1126,8 @@ def dns_step3(S: DnsState, fuse: bool = True) -> None:
                     o2 = m2 * (invk2 * ax);
                 }
 
-                int oidx = z * NK_full + k;
-                out1[oidx] = o1;
-                out2[oidx] = o2;
+                out1[idx] = o1;
+                out2[idx] = o2;
             }
             ''', "turbo_step3_build_uc01")
 
@@ -1185,8 +1171,7 @@ def dns_step3(S: DnsState, fuse: bool = True) -> None:
             ),
         )
 
-        # BUILD: write directly into uc_full[0/1] low-k band at stride NK_full,
-        # fusing the scatter so scratch1/scratch2 aren't touched on the GPU path.
+        # BUILD: out1/out2 (scratch1/2) from updated om2
         _STEP3_BUILD_UC_KERNEL(
             (blocks,),
             (threads,),
@@ -1196,11 +1181,13 @@ def dns_step3(S: DnsState, fuse: bool = True) -> None:
                 S.gamma,
                 S.alfa,
                 S.step3_inv_gamma0,
-                uc_full[0],
-                uc_full[1],
-                NX_half_i32, NZ_i32, NK_full_i32,
+                S.scratch1,
+                S.scratch2,
+                NX_half_i32, NZ_i32,
             ),
-        )
+        )# Scatter into uc_full low-k band (strided in NK_full, keep the simple slice assign)
+        uc_full[0, :NZ, :NX_half] = S.scratch1
+        uc_full[1, :NZ, :NX_half] = S.scratch2
 
         S.cnm1 = float(S.cn)
         return
@@ -1531,10 +1518,11 @@ def _spectral_band_to_phys_full_grid(S: DnsState, band) -> any:
     fft = S.fft
 
     if S.backend == "cpu":
-        phys = fft.irfft2(uc_tmp, s=(NZ_full, NX_full), axes=(0, 1), overwrite_x=True, workers=S.fft_workers, norm='forward')
+        phys = fft.irfft2(uc_tmp, s=(NZ_full, NX_full), axes=(0, 1), overwrite_x=True, workers=S.fft_workers)
     else:
-        phys = fft.irfft2(uc_tmp, s=(NZ_full, NX_full), axes=(0, 1), overwrite_x=True, norm='forward')
+        phys = fft.irfft2(uc_tmp, s=(NZ_full, NX_full), axes=(0, 1), overwrite_x=True)
 
+    phys *= (NZ_full * NX_full)
     return xp.asarray(phys, dtype=xp.float32)
 
 
