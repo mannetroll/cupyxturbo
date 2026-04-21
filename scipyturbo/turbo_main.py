@@ -505,17 +505,17 @@ class MainWindow(QMainWindow):
         # window setup
         import importlib.util
 
-        title_backend = "(SciPy)"
+        self.title_backend = "(SciPy)"
         if importlib.util.find_spec("cupy") is not None:
             import cupy as cp
             try:
                 props = cp.cuda.runtime.getDeviceProperties(0)
                 gpu_name = props["name"].decode(errors="replace")
-                title_backend = f"(CuPy) {gpu_name}"
+                self.title_backend = f"(CuPy) {gpu_name}"
             except (RuntimeError, OSError, ValueError, IndexError):
                 pass
 
-        self.setWindowTitle(f"2D Turbulence {title_backend} © Mannetroll")
+        self.setWindowTitle(f"2D Turbulence {self.title_backend} © Mannetroll")
         disp_w, disp_h = self._display_size_px()
         self.resize(disp_w + 40, disp_h + 120)
 
@@ -713,41 +713,61 @@ class MainWindow(QMainWindow):
         self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
         self.on_start_clicked()
 
-    def _save_omega_radial_spectrum(self, omega: np.ndarray, out_png: str) -> None:
-        """
-        Save a log-log radially averaged 2D FFT power spectrum (approx) as a PNG figure.
+    def _save_energy_spectrum_uv(self, u: np.ndarray, v: np.ndarray, out_png: str) -> None:
+        """Save the energy spectrum figure to a PNG file."""
+        import matplotlib.pyplot as plt
+        fig = self._make_energy_spectrum_fig(u, v)
+        if fig is None:
+            return
+        fig.savefig(out_png)
+        plt.close(fig)
 
-        - x-axis: normalized radius  k / k_Nyquist  where k_Nyquist = N/2 (axis Nyquist)
-          => max radius reaches ~sqrt(2) at the corners.
-        - y-axis: radially averaged power (mean within radial bins)
+    def _make_energy_spectrum_fig(self, u, v, modal: bool = False):
+        """
+        Build a log-log isotropic kinetic energy spectrum figure E(k) from u,v.
+
+        This is the textbook definition in Fourier space:
+            E(k) ∝ sum_{|k| in shell} (|û(k)|^2 + |v̂(k)|^2)
+
+        Accepts NumPy or CuPy arrays; heavy math stays on the input device.
+        Returns a matplotlib Figure, or None if inputs are invalid.
         """
         import matplotlib.pyplot as plt
 
-        a = np.asarray(omega, dtype=np.float64)
-        if a.ndim != 2:
-            return
+        # Detect array module (CuPy or NumPy)
+        xp = np
+        try:
+            import cupy
+            if isinstance(u, cupy.ndarray):
+                xp = cupy
+        except Exception:
+            pass
 
-        NZ, NX = a.shape
-        if NZ < 2 or NX < 2:
-            return
+        u = xp.asarray(u, dtype=xp.float64)
+        v = xp.asarray(v, dtype=xp.float64)
+        if u.ndim != 2 or v.ndim != 2 or u.shape != v.shape:
+            return None
+
+        NZ, NX = u.shape
 
         # Remove mean (DC)
-        a = a - float(a.mean())
+        u = u - u.mean()
+        v = v - v.mean()
 
-        # 2D FFT power
-        W = np.fft.fft2(a)
-        P = (W.real * W.real + W.imag * W.imag)  # |W|^2
+        # 2D FFT power of velocity components
+        U = xp.fft.fft2(u)
+        V = xp.fft.fft2(v)
+        P = (U.real * U.real + U.imag * U.imag) + (V.real * V.real + V.imag * V.imag)
 
         # Frequency grids in "integer mode" units
-        kx = np.fft.fftfreq(NX) * NX
-        kz = np.fft.fftfreq(NZ) * NZ
-        KZ, KX = np.meshgrid(kz, kx, indexing="ij")
+        kx = xp.fft.fftfreq(NX) * NX
+        kz = xp.fft.fftfreq(NZ) * NZ
+        KZ, KX = xp.meshgrid(kz, kx, indexing="ij")
 
         # Normalized radial wavenumber: k / (N/2)
-        # Use axis Nyquist based on the smaller dimension (robust if NZ!=NX)
         N = float(min(NX, NZ))
         k_nyq = 0.5 * N
-        R = np.sqrt(KX * KX + KZ * KZ) / k_nyq
+        R = xp.sqrt(KX * KX + KZ * KZ) / k_nyq
 
         # Exclude the DC bin (R==0) from the radial statistics
         mask = R > 0.0
@@ -755,55 +775,97 @@ class MainWindow(QMainWindow):
         p = P[mask].ravel()
 
         # Radial binning up to r_max = sqrt(2) (corner)
-        r_max = np.sqrt(2.0)
+        r_max = float(xp.sqrt(xp.float64(2.0)))
         nbins = max(32, int(2 * min(NX, NZ)))  # reasonably smooth curve
-        # Map r in (0..r_max] -> bin index [0..nbins-1]
-        idx = np.floor((r / r_max) * nbins).astype(np.int64)
-        idx = np.clip(idx, 0, nbins - 1)
+        idx = xp.floor((r / r_max) * nbins).astype(xp.int64)
+        idx = xp.clip(idx, 0, nbins - 1)
 
-        # Mean power per radial bin
-        psum = np.bincount(idx, weights=p, minlength=nbins)
-        cnt = np.bincount(idx, minlength=nbins).astype(np.float64)
-        good = cnt > 0.0
-        pmean = np.zeros(nbins, dtype=np.float64)
-        pmean[good] = psum[good] / cnt[good]
+        # Shell-sum energy spectrum estimate
+        esum = xp.bincount(idx, weights=p, minlength=nbins)
+        cnt = xp.bincount(idx, minlength=nbins).astype(xp.float64)
+        good = (cnt > 0.0) & (esum > 0.0)
 
-        # Bin centers in normalized radius
+        # Transfer small arrays to CPU for matplotlib
+        if xp is not np:
+            esum = esum.get()
+            good = good.get()
+
+        # Free GPU memory used by intermediate arrays
+        del u, v, U, V, P, kx, kz, KZ, KX, R, mask, r, p, idx, cnt
+        if xp is not np:
+            xp.get_default_memory_pool().free_all_blocks()
+
+        # Bin centers in a normalized radius (always CPU for plotting)
         r_edges = np.linspace(0.0, r_max, nbins + 1)
         r_centers = 0.5 * (r_edges[:-1] + r_edges[1:])
 
-        # Plot (match “last time” style)
-        fig = plt.figure(figsize=(8, 5))
+        # Plot
+        fig = plt.figure(figsize=(6, 4) if modal else (12, 8))
         ax = fig.add_subplot(1, 1, 1)
-        ax.loglog(r_centers[good], pmean[good])
+        ax.loglog(r_centers[good], esum[good])
         ax.set_ylim(bottom=1)
-        ax.set_title("Omega image: radially averaged FFT power spectrum (approx)")
-        ax.set_xlabel("normalized radius  k / k_Nyquist  (from image)")
-        ax.set_ylabel("radially averaged power")
+        ax.set_title("Energy spectrum estimate E(k) from u,v (shell sum)")
+        ax.set_xlabel("normalized radius  k / k_Nyquist")
+        ax.set_ylabel("shell-sum energy (unnormalized)")
+
+        # Mark K0 location on normalized axis (uses simulation N, not image N)
         k0_norm = (2.0 * float(self.sim.k0)) / float(self.sim.N)
         ax.axvline(k0_norm)
 
-        # Metadata annotation (force black so it won't be blue)
-        # Keep it short + useful
-        meta = (
-            f"N={min(NX, NZ)}  Re={self.sim.re:g}  visc={float(self.sim.state.visc):.3g}\n"
-            f"t={float(self.sim.get_time()):.6g}  it={int(self.sim.get_iteration())}\n"
-            f"K0={self.sim.k0:g}\n"
-            f"pal/Zkmax^2={self.palinstrophy_over_enstrophy_kmax2:.2e}"
-        )
-        ax.text(
-            0.02, 0.02, meta,
-            transform=ax.transAxes,
-            ha="left", va="bottom",
-            fontsize=12,
-            color="black",
-            bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="black", alpha=0.85),
-        )
+        # Reference decay line with slope -3 (textbook enstrophy cascade: E(k) ~ k^-3)
+        x2 = 0.7
+        if x2 > 0.0 and np.any(good):
+            x_good = r_centers[good]
+            y_good = esum[good]
+
+            # Anchor at the maximum of the energy spectrum (peak) instead of K0
+            i_peak = int(np.argmax(y_good))
+            x1 = float(x_good[i_peak])
+            y1 = float(y_good[i_peak]) if float(y_good[i_peak]) > 0.0 else 1.0
+
+            if x2 != x1:
+                slope = -3.0
+                y2 = y1 * (x2 / x1) ** slope
+                ax.loglog([x1, x2], [y1, y2], "--", linewidth=2)
+                ax.text(x2, y2 * 2, r"$k^{-3}$", fontsize=11, ha="left", va="center", color="black")
+
+        if not modal:
+            meta = self.get_meta()
+            ax.text(
+                0.02, 0.02, meta,
+                transform=ax.transAxes,
+                ha="left", va="bottom",
+                fontsize=10,
+                linespacing=1.5,
+                color="black",
+            )
 
         fig.tight_layout()
-        fig.savefig(out_png)
-        plt.close(fig)
+        return fig
 
+    def get_meta(self) -> str:
+        # Metadata annotation (keep it short + useful)
+        elapsed = time.time() - self._sim_start_time
+        steps = self.sim.get_iteration() - self._sim_start_iter
+        minutes = elapsed / 60.0
+        FPS = steps / elapsed if elapsed > 0 else 0.0
+        meta = (
+            f"{_dt.datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+            f"N={self.sim.N}\n"
+            f"K0={self.sim.k0:g}\n"
+            f"Re={self.sim.re:,.0f}\n"
+            f"CFL={self.sim.cfl:.2f}\n"
+            f"visc={float(self.sim.state.visc):.3g}\n"
+            f"T={float(self.sim.get_time()):.6g}\n"
+            f"IT={int(self.sim.get_iteration())}\n"
+            f"Update={int(self._update_intervall)}\n"
+            f"σ={int(self.sig)}\n"
+            f"10K*pal/Zkmax²={(10000 * self.palinstrophy_over_enstrophy_kmax2):.1f}\n"
+            f"minutes={minutes:.2f}\n"
+            f"FPS={FPS:.1f}\n"
+            f"{self.title_backend}"
+        )
+        return meta
 
     @staticmethod
     def sci_no_plus(x, decimals=0):
@@ -852,12 +914,15 @@ class MainWindow(QMainWindow):
         os.makedirs(folder_path, exist_ok=True)
 
         print(f"[SAVE] Dumping fields to folder: {folder_path}")
-        self._dump_pgm_full(self._get_full_field("u"), os.path.join(folder_path, "u_velocity.pgm"))
-        self._dump_pgm_full(self._get_full_field("v"), os.path.join(folder_path, "v_velocity.pgm"))
+        u = self._get_full_field("u")
+        v = self._get_full_field("v")
+        self._dump_pgm_full(u, os.path.join(folder_path, "u_velocity.pgm"))
+        self._dump_pgm_full(v, os.path.join(folder_path, "v_velocity.pgm"))
         self._dump_pgm_full(self._get_full_field("kinetic"), os.path.join(folder_path, "kinetic.pgm"))
         omega = self._get_full_field("omega")
         self._dump_pgm_full(omega, os.path.join(folder_path, "omega.pgm"))
-        self._save_omega_radial_spectrum(omega, os.path.join(folder_path, f"omega_spectrum_{suffix}.png"))
+        # Textbook enstrophy cascade check: E(k) from u,v in Fourier space (expect ~k^-3 range)
+        self._save_energy_spectrum_uv(u, v, os.path.join(folder_path, f"energy_spectrum_{suffix}.png"))
         print("[SAVE] Completed.")
 
     def on_save_clicked(self) -> None:
