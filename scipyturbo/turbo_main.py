@@ -349,7 +349,7 @@ class MainWindow(QMainWindow):
         # --- grain metrics (omega) ---
         self.kmax: Optional[float] = None
         self.high_k_fraction: Optional[float] = None
-        self.palinstrophy_over_enstrophy_kmax2: Optional[float] = None
+        self.strophy_over_enstrophy_kmax2: Optional[float] = None
 
         # --- central image label ---
         self.image_label = QLabel()
@@ -425,7 +425,7 @@ class MainWindow(QMainWindow):
         # K0 selector
         self.k0_combo = QComboBox()
         self.k0_combo.setToolTip("K: Initial energy peak wavenumber (K0)")
-        self.k0_combo.addItems(["5", "10", "15", "20", "25", "35", "50", "90"])
+        self.k0_combo.addItems(["1", "3", "5", "10", "15", "20", "25", "35", "50", "90"])
         self.k0_combo.setCurrentText(str(int(self.sim.k0)))
 
         # Colormap selector
@@ -1344,7 +1344,7 @@ def main() -> None:
     ITERATIONS = int(args[7]) if len(args) > 7 else 10**9
 
     app = QApplication(sys.argv)
-    icon_path = Path(__file__).with_name("palinstrophy.icns")
+    icon_path = Path(__file__).with_name("scipyturbo.icns")
     icon = QIcon(str(icon_path))
     app.setWindowIcon(icon)
 
